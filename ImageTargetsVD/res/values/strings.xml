@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">DishART Offline</string>
+    <string name="app_description">QCAR ImageTargets Sample Application</string>
+    <string name="content_description_background">Background</string>
+    <string name="content_description_menu">Menu</string>
+    <string name="menu_data_touch_for_more">Click for original image</string>
+    <string name="title_activity_reco">Reco</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_full_image1">FullImage1</string>
+    <string name="title_activity_full_image2">FullImage2</string>
+
+</resources>

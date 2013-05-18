@@ -1,0 +1,13 @@
+1. Prepare the environment here:
+   https://developer.vuforia.com/resources/dev-guide/step-1-setting-development-environment-android-sdk
+    Step 1: Setting Up the Dev Environment
+    Step 2: Installing the Vuforia SDK
+    Step 3: Compiling and Running a Sample App
+
+2. Copy "Menu_Img" from GitHub to "ExternalStorageDirectory" root on Android device.
+
+3. Go to project "ImageTargetsVD" folder
+
+4. run "ndk-build"
+
+5. Run example on Eclipse

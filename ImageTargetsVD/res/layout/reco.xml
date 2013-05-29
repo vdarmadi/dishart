@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="0dp"
         android:gravity="center"
         android:text="Top Rated Dish at Underbelly"
         android:textColor="#000000"
@@ -22,7 +22,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="0dp"
         android:src="@drawable/kimchi_ramen" />
 
     <TextView
@@ -30,8 +30,8 @@
         android:layout_width="153dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_margin="5dp"
-        android:layout_marginTop="5dp"
+        android:layout_margin="0dp"
+        android:layout_marginTop="0dp"
         android:gravity="center"
         android:text="Kimchi Ramen"
         android:textColor="#000000"
@@ -43,7 +43,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="0dp"
         android:src="@drawable/shrimp_gyoza" />
 
     <TextView
@@ -51,7 +51,7 @@
         android:layout_width="153dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="0dp"
         android:gravity="center"
         android:text="Shrimp Gyoza"
         android:textColor="#000000"
@@ -63,7 +63,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="0dp"
         android:src="@drawable/tuna_tataki" />
     
      <TextView
@@ -71,7 +71,7 @@
          android:layout_width="153dp"
          android:layout_height="wrap_content"
          android:layout_gravity="center"
-         android:layout_marginTop="5dp"
+         android:layout_marginTop="0dp"
          android:gravity="center"
          android:text="Tuna Tataki"
          android:textColor="#000000"
@@ -83,7 +83,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="0dp"
         android:text="Discover more" />
 
 </LinearLayout>

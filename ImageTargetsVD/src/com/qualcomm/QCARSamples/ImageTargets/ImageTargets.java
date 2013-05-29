@@ -950,16 +950,17 @@ public class ImageTargets extends Activity
 	private void downloadTextures(String title) {
 		mTextures = new Vector<Texture>();
 
-		if ("Menu".equals(title)) {
-			File root = Environment.getExternalStorageDirectory();
-		    File localImages = new File(root, title + "_Img");
-		    for (File f : localImages.listFiles()) {
-				Texture t = loadLocalDishOverlay(f);
-				if (t != null) {
-					t.mName = f.getName(); // File name must be stored due to mapping issue.
-					mTextures.add(t);
-				}
-		    }
+		File root = Environment.getExternalStorageDirectory();
+	    File localImages = new File(root, title + "_Img");
+
+		if ("Menu".equals(title) && localImages.exists()) {
+			for (File f : localImages.listFiles()) {
+					Texture t = loadLocalDishOverlay(f);
+					if (t != null) {
+						t.mName = f.getName(); // File name must be stored due to mapping issue.
+						mTextures.add(t);
+					}
+			}
 		}
 		else {
 			FTPClient client = new FTPClient();

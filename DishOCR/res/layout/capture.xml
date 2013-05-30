@@ -30,6 +30,12 @@
       android:layout_height="fill_parent"
       android:background="#0000"/>
 
+  <ImageView
+		android:id="@+id/image_result"
+		android:layout_width="160dip"
+		android:layout_height="160dip"
+		android:layout_gravity="top|center" />
+
   <LinearLayout android:id="@+id/result_view"
                 android:orientation="vertical"
                 android:layout_width="fill_parent"

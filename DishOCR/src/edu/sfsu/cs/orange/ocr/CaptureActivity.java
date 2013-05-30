@@ -38,6 +38,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -71,6 +72,11 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 
 /**
  * This activity opens the camera and does the actual scanning on a background thread. It draws a
@@ -200,6 +206,14 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private boolean isEngineReady;
   private boolean isPaused;
   private static boolean isFirstLaunch; // True if this is the first time the app is being run
+  private ImageView imageResult; // Place to display image when text is recognized.
+  private Map<String, String> menuTitles = new HashMap<String, String>() { // Hardcoded menu titles temporarily.
+		{
+			put("SEVEN RADISH SALAD w / SPICY TUNA CROSTINI", "0sevenradish");
+			put("TERIYAKI CHICKEN SALAD", "teriyaki_c_s");
+			put("KUROBUTA SAUSAGE", "Korobuta");
+		}
+	};
 
   Handler getHandler() {
     return handler;
@@ -338,7 +352,21 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       }
     });
     
+    imageResult = (ImageView) findViewById(R.id.image_result); // Initialize ImageView.
+    imageResult.setVisibility(View.INVISIBLE); // Don't display it first.
+
     isEngineReady = false;
+  }
+  
+  /**
+   * Method for reading image from asset folder.
+   */
+  private Bitmap getBitmapFromAsset(String strName) throws IOException
+  {
+      AssetManager assetManager = getAssets();
+      InputStream istr = assetManager.open(strName);
+      Bitmap bitmap = BitmapFactory.decodeStream(istr);
+      return bitmap;
   }
 
   @Override
@@ -818,6 +846,30 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       statusViewTop.setBackgroundResource(R.color.status_top_text_background);
 
       statusViewTop.getBackground().setAlpha(meanConfidence * (255 / 100));
+
+      String ocrTextResult = ocrResult.getText(); // Recognized text result.
+      String normOcrTextResult = ocrTextResult.replace("\n", "").replace("\r", "").replaceAll("\\s",""); // Remove line breaks, whitespace, etc. 
+      
+      // Iterates through the menu titles and see if there is a match.
+      String imageName = "";
+      Set<String> titleSet = menuTitles.keySet();
+      for (String menuTitle : titleSet) {
+    	  if (match(normOcrTextResult, menuTitle.replaceAll("\\s",""))) {
+    		  imageName = menuTitles.get(menuTitle);
+    	  } 
+      }
+      if (imageName != null && imageName.length() > 0) { // MATCH.
+    	  try {
+    		  Bitmap bm = getBitmapFromAsset(imageName + ".jpg");
+    		  imageResult.setImageBitmap(bm);
+    		  imageResult.setVisibility(View.VISIBLE);
+    	  } catch (IOException e) {
+    		  Log.e(TAG, "Could not read image from asset folder", e);
+    	  }
+      }
+      else {
+    	  imageResult.setVisibility(View.INVISIBLE); // NO MATCH.
+      }
     }
 
     if (CONTINUOUS_DISPLAY_METADATA) {
@@ -828,7 +880,27 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
           meanConfidence.toString() + " - Time required: " + recognitionTimeRequired + " ms");
     }
   }
-  
+  	
+  	/**
+  	 * Method to match the recognized text with the 
+  	 * existing menu titles.
+  	 */
+	private boolean match(String str1, String str2) {
+		String longer = "";
+		String shorter = "";
+		if (str1.length() > str2.length()) {
+			longer = str1.toLowerCase();
+			shorter = str2.toLowerCase();;
+		} else {
+			longer = str2.toLowerCase();;
+			shorter = str1.toLowerCase();;
+		}
+		if (longer.indexOf(shorter) != -1) {
+			return true;
+		}
+		return false;
+	}
+
   /**
    * Version of handleOcrContinuousDecode for failed OCR requests. Displays a failure message.
    * 

@@ -213,6 +213,25 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 			put("TERIYAKI CHICKEN SALAD", "teriyaki_c_s");
 			put("KUROBUTA SAUSAGE", "Korobuta");
 			put("CHRYSANTHEMUM MIST DRAFT", "chrysanthemum");
+			put("Chicken Tandoori Chicken on the bone", "default");
+			put("Chicken Tikka", "default");
+			put("Lobster Tandoori", "default");
+			put("Fish Tandoori", "default");
+			put("Seekh Kebab", "default");
+			put("Reshml Kebab", "default");
+			put("Canelloni", "default");
+			put("Gyro Dinner", "default");
+			put("Bruschetta", "default");
+			put("Red Winw, Yakut, Turkey", "default");
+			put("Filet Mignon", "default");
+			put("Imam Bayildi", "default");
+			put("New York Strip Steak", "default");
+			put("APPPLEWOOD BACON", "default");
+			put("Fried Mozzarella Sticks", "default");
+			put("Shrimp Saute 7", "default");
+			put("ROASTED EGGPLAN", "default");
+			put("Handcut Fries", "default");
+			put("SOPAPILLA", "default");
 		}
 	};
 
@@ -911,20 +930,31 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   	 * existing menu titles.
   	 */
 	private boolean match(String str1, String str2) {
-		String first = str1;
-		String second = str2;
+		String first = str1.toLowerCase();
+		String second = str2.toLowerCase();
+		String longer;
+		String shorter;
+
 		double m;
 		if (first.length() >= second.length()) {
 			m = first.length();
+			longer = first;
+			shorter = second;
 		} else {
 			m = second.length();
+			longer = second;
+			shorter = first;
 		}
 		double l;
 		l = computeLevenshteinDistance(first, second);
 		double p;
 		p = (1 - (l / m)) * 100;
+		// Log.d(TAG, "Similarity: " + p);
 		
-		return p >= 60 ? true : false;
+		boolean containsTemplate = (longer.indexOf(shorter) >= 0);
+		// Log.d(TAG, "containsTemplate: " + containsTemplate);
+
+		return (p >= 60 || containsTemplate) ? true : false;
 	}
 
   /**

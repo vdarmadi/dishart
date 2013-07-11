@@ -212,6 +212,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 			put("SEVEN RADISH SALAD w / SPICY TUNA CROSTINI", "0sevenradish");
 			put("TERIYAKI CHICKEN SALAD", "teriyaki_c_s");
 			put("KUROBUTA SAUSAGE", "Korobuta");
+			put("CHRYSANTHEMUM MIST DRAFT", "chrysanthemum");
 		}
 	};
 
@@ -856,7 +857,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       for (String menuTitle : titleSet) {
     	  if (match(normOcrTextResult, menuTitle.replaceAll("\\s",""))) {
     		  imageName = menuTitles.get(menuTitle);
-    	  } 
+    	  }
       }
       if (imageName != null && imageName.length() > 0) { // MATCH.
     	  try {
@@ -880,25 +881,50 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
           meanConfidence.toString() + " - Time required: " + recognitionTimeRequired + " ms");
     }
   }
+
+	private static int minimum(int a, int b, int c) {
+		return Math.min(Math.min(a, b), c);
+	}
+
+	public static int computeLevenshteinDistance(CharSequence str1, CharSequence str2) {
+		int[][] distance = new int[str1.length() + 1][str2.length() + 1];
+
+		for (int i = 0; i <= str1.length(); i++)
+			distance[i][0] = i;
+		for (int j = 1; j <= str2.length(); j++)
+			distance[0][j] = j;
+
+		for (int i = 1; i <= str1.length(); i++)
+			for (int j = 1; j <= str2.length(); j++)
+				distance[i][j] = minimum(
+						distance[i - 1][j] + 1,
+						distance[i][j - 1] + 1,
+						distance[i - 1][j - 1]
+								+ ((str1.charAt(i - 1) == str2.charAt(j - 1)) ? 0
+										: 1));
+
+		return distance[str1.length()][str2.length()];
+	}
   	
   	/**
   	 * Method to match the recognized text with the 
   	 * existing menu titles.
   	 */
 	private boolean match(String str1, String str2) {
-		String longer = "";
-		String shorter = "";
-		if (str1.length() > str2.length()) {
-			longer = str1.toLowerCase();
-			shorter = str2.toLowerCase();;
+		String first = str1;
+		String second = str2;
+		double m;
+		if (first.length() >= second.length()) {
+			m = first.length();
 		} else {
-			longer = str2.toLowerCase();;
-			shorter = str1.toLowerCase();;
+			m = second.length();
 		}
-		if (longer.indexOf(shorter) != -1) {
-			return true;
-		}
-		return false;
+		double l;
+		l = computeLevenshteinDistance(first, second);
+		double p;
+		p = (1 - (l / m)) * 100;
+		
+		return p >= 60 ? true : false;
 	}
 
   /**

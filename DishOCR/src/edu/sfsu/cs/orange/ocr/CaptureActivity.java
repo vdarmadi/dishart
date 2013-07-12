@@ -73,6 +73,7 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -207,6 +208,8 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private boolean isPaused;
   private static boolean isFirstLaunch; // True if this is the first time the app is being run
   private ImageView imageResult; // Place to display image when text is recognized.
+  private double percentage = 0;
+  private boolean substrMatch;
   private Map<String, String> menuTitles = new HashMap<String, String>() { // Hardcoded menu titles temporarily.
 		{
 			put("SEVEN RADISH SALAD w / SPICY TUNA CROSTINI", "0sevenradish");
@@ -876,6 +879,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       for (String menuTitle : titleSet) {
     	  if (match(normOcrTextResult, menuTitle.replaceAll("\\s",""))) {
     		  imageName = menuTitles.get(menuTitle);
+    		  break;
     	  }
       }
       if (imageName != null && imageName.length() > 0) { // MATCH.
@@ -896,8 +900,10 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       // Display recognition-related metadata at the bottom of the screen
       long recognitionTimeRequired = ocrResult.getRecognitionTimeRequired();
       statusViewBottom.setTextSize(14);
+      DecimalFormat df = new DecimalFormat("####0.00");
       statusViewBottom.setText("OCR: " + sourceLanguageReadable + " - Mean confidence: " + 
-          meanConfidence.toString() + " - Time required: " + recognitionTimeRequired + " ms");
+          meanConfidence.toString() + " - Time required: " + recognitionTimeRequired + " ms - Found Similarity " + df.format(this.percentage)
+          + " - Found Substring Match: " + this.substrMatch);
     }
   }
 
@@ -949,9 +955,11 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 		l = computeLevenshteinDistance(first, second);
 		double p;
 		p = (1 - (l / m)) * 100;
+		this.percentage = p;
 		// Log.d(TAG, "Similarity: " + p);
 		
 		boolean containsTemplate = (longer.indexOf(shorter) >= 0);
+		this.substrMatch = containsTemplate;
 		// Log.d(TAG, "containsTemplate: " + containsTemplate);
 
 		return (p >= 60 || containsTemplate) ? true : false;

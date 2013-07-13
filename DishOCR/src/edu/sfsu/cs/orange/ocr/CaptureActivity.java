@@ -215,7 +215,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 			put("SEVEN RADISH SALAD w / SPICY TUNA CROSTINI", "0sevenradish");
 			put("TERIYAKI CHICKEN SALAD", "teriyaki_c_s");
 			put("KUROBUTA SAUSAGE", "Korobuta");
-			put("CHRYSANTHEMUM MIST DRAFT kikusui funaguchi", "chrysanthemum");
+			put("CHRYSANTHEMUM MIST DRAFT", "chrysanthemum");
 			put("Chicken Tandoori Chicken on the bone", "default");
 			put("Chicken Tikka", "default");
 			put("Lobster Tandoori", "default");

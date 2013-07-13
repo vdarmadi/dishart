@@ -71,6 +71,16 @@ public final class CameraManager {
   }
 
   /**
+   * Temporary method to get info about
+   * focus mode that is currently running
+   * and display it on the screen.
+   * REMOVE THIS ONCE NOT USED ANYMORE.
+   */
+  public Camera getCamera() {
+	return camera;
+  }
+
+  /**
    * Opens the camera driver and initializes the hardware parameters.
    *
    * @param holder The surface object which the camera will draw preview frames into.

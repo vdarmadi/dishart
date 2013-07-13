@@ -215,7 +215,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 			put("SEVEN RADISH SALAD w / SPICY TUNA CROSTINI", "0sevenradish");
 			put("TERIYAKI CHICKEN SALAD", "teriyaki_c_s");
 			put("KUROBUTA SAUSAGE", "Korobuta");
-			put("CHRYSANTHEMUM MIST DRAFT", "chrysanthemum");
+			put("CHRYSANTHEMUM MIST DRAFT kikusui funaguchi", "chrysanthemum");
 			put("Chicken Tandoori Chicken on the bone", "default");
 			put("Chicken Tikka", "default");
 			put("Lobster Tandoori", "default");
@@ -224,17 +224,52 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 			put("Reshml Kebab", "default");
 			put("Canelloni", "default");
 			put("Gyro Dinner", "default");
-			put("Bruschetta", "default");
-			put("Red Winw, Yakut, Turkey", "default");
+			put("Souvlaki Platter", "default");
+			put("Mousaka", "default");
+			put("Pastitio", "default");
+			put("Chicken Gyro", "default");
+			put("Chicken Souvlaki", "default");
+			put("Taiwanese Style Seaweed", "default");
+			put("Taiwanese Style Cucumber", "default");
+			put("Deep Fried Tofu", "default");
+			put("Chicken Souvlaki", "default");
 			put("Filet Mignon", "default");
-			put("Imam Bayildi", "default");
-			put("New York Strip Steak", "default");
+			put("London Broil", "default");
+			put("Red Winw, Yakut, Turkey", "default");
+			put("Red Dry, Nemea, Greece", "default");
+			put("Chianti, Ruffino, Toscana", "default");
+			put("Antipasto", "default");
+			put("Bruschetta", "default");
+			put("Sauteed Di Cozze", "default");
 			put("APPPLEWOOD BACON", "default");
-			put("Fried Mozzarella Sticks", "default");
-			put("Shrimp Saute 7", "default");
+			put("BACON WRAPPED MUSHROOM", "default");
+			put("Broiled unagi", "default");
 			put("ROASTED EGGPLAN", "default");
+			put("ROASTED MUSHROOM", "default");
+			put("ROASTED ZUCCHINI", "default");
+			put("Shrimp Saute 7", "default");
+			put("Scallops Saute 4", "default");
+			put("Vegetables", "default");
+			put("Chicken 5 oz.", "default");
+			put("New York Steak 7 oz.", "default");
+			put("New York Strip Steak", "default");
+			put("GRilled Chicken Marsala", "default");
+			put("Imam Bayildi", "default");
+			put("Mujaddara", "default");
+			put("Maglura", "default");
+			put("Biber Dolmasi", "default");
+			put("Fried Mozzarella Sticks", "default");
+			put("Guacamole, Salsa & Chips", "default");
+			put("Pot Stickers Chinese Pork Dumplings", "default");
 			put("Handcut Fries", "default");
+			put("White or Brown rice", "default");
+			put("Black or Pinto Beans", "default");
+			put("Sourcream", "default");
+			put("Jalapenos", "default");
+			put("Refill chips and salsa", "default");
 			put("SOPAPILLA", "default");
+			put("SOPAPILLA with ice cream", "default");
+			put("Chimi cheesecake", "default");
 		}
 	};
 
@@ -901,9 +936,10 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       long recognitionTimeRequired = ocrResult.getRecognitionTimeRequired();
       statusViewBottom.setTextSize(14);
       DecimalFormat df = new DecimalFormat("####0.00");
+      String currentFocusMode = cameraManager.getCamera().getParameters().getFocusMode(); // Get current focus mode just for debugging purposes.
       statusViewBottom.setText("OCR: " + sourceLanguageReadable + " - Mean confidence: " + 
           meanConfidence.toString() + " - Time required: " + recognitionTimeRequired + " ms - Found Similarity " + df.format(this.percentage)
-          + " - Found Substring Match: " + this.substrMatch);
+          + " - Found Substring Match: " + this.substrMatch + " - Focus Mode: " + currentFocusMode); // Add more debug info.
     }
   }
 

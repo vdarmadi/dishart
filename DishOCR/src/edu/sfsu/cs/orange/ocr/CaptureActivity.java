@@ -918,15 +918,16 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       }
       if (imageName != null && imageName.length() > 0) { // MATCH.
     	  try {
-    		  Bitmap bm = getBitmapFromAsset(imageName + ".jpg");
+    		  Bitmap bm = getBitmapFromAsset(imageName + ".jpg"); // This can be replaced with API call.
     		  imageResult.setImageBitmap(bm);
     		  imageResult.setVisibility(View.VISIBLE);
+    		  imageResult.invalidate(); // Fix image flickering.
     	  } catch (IOException e) {
     		  Log.e(TAG, "Could not read image from asset folder", e);
     	  }
       }
       else {
-    	  imageResult.setVisibility(View.INVISIBLE); // NO MATCH.
+    	  // imageResult.setVisibility(View.INVISIBLE); // NO MATCH. // Fix image flickering.
       }
     }
 

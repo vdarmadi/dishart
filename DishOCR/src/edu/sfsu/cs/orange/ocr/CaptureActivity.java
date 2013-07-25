@@ -17,17 +17,22 @@
 
 package edu.sfsu.cs.orange.ocr;
 
-import edu.sfsu.cs.orange.ocr.BeepManager;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.googlecode.tesseract.android.TessBaseAPI;
-
-import edu.sfsu.cs.orange.ocr.camera.CameraManager;
-import edu.sfsu.cs.orange.ocr.camera.ShutterButton;
-import edu.sfsu.cs.orange.ocr.HelpActivity;
-import edu.sfsu.cs.orange.ocr.OcrResult;
-import edu.sfsu.cs.orange.ocr.PreferencesActivity;
-import edu.sfsu.cs.orange.ocr.language.LanguageCodeHelper;
-import edu.sfsu.cs.orange.ocr.language.TranslateAsyncTask;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -55,6 +60,7 @@ import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -65,18 +71,16 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.DecimalFormat;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import com.googlecode.tesseract.android.TessBaseAPI;
+
+import edu.sfsu.cs.orange.ocr.camera.CameraManager;
+import edu.sfsu.cs.orange.ocr.camera.ShutterButton;
+import edu.sfsu.cs.orange.ocr.language.LanguageCodeHelper;
+import edu.sfsu.cs.orange.ocr.language.TranslateAsyncTask;
 
 
 /**
@@ -210,67 +214,8 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private ImageView imageResult; // Place to display image when text is recognized.
   private double percentage = 0;
   private boolean substrMatch;
-  private Map<String, String> menuTitles = new HashMap<String, String>() { // Hardcoded menu titles temporarily.
-		{
-			put("SEVEN RADISH SALAD w / SPICY TUNA CROSTINI", "0sevenradish");
-			put("TERIYAKI CHICKEN SALAD", "teriyaki_c_s");
-			put("KUROBUTA SAUSAGE", "Korobuta");
-			put("CHRYSANTHEMUM MIST DRAFT", "chrysanthemum");
-			put("Chicken Tandoori", "chickentandoori");
-			put("Chicken Tikka", "chickentikka");
-			put("Lobster Tandoori", "lobstertandoori");
-			put("Fish Tandoori", "fishtandoori");
-			put("Seekh Kebab", "seekhkebab");
-			put("Reshml Kebab", "reshmikebab");
-			put("Canelloni", "canelloni");
-			put("Gyro Dinner", "gyrodinner");
-			put("Souvlaki Platter", "souvlakiplatter");
-			put("Mousaka", "mousaka");
-			put("Pastitio", "pastitio");
-			put("Chicken Gyro", "chickengyro");
-			put("Chicken Souvlaki", "chickensouvlaki");
-			put("Taiwanese Style Seaweed", "taiwanesestyleseaweed");
-			put("Taiwanese Style Cucumber", "taiwanesestylecucumber");
-			put("Deep Fried Tofu", "deepfriedtofu");
-			put("Filet Mignon", "filetmignon");
-			put("London Broil", "londonbroil");
-			put("Red Wine, Yakut, Turkey", "redwine");
-			put("Red Dry, Nemea, Greece", "reddry");
-			put("Chianti, Ruffino, Toscana", "chianti");
-			put("Antipasto", "antipasto");
-			put("Bruschetta", "bruschetta");
-			put("Sauteed Di Cozze", "sauteeddicozze");
-			put("APPPLEWOOD BACON", "appplewoodbacon");
-			put("BACON WRAPPED MUSHROOM", "baconwrappedmushroom");
-			put("Broiled unagi", "broiledunagi");
-			put("ROASTED EGGPLAN", "roastedeggplan");
-			put("ROASTED MUSHROOM", "roastedmushroom");
-			put("ROASTED ZUCCHINI", "roastedzucchini");
-			put("Shrimp Saute 7", "shrimpsaute7");
-			put("Scallops Saute 4", "scallopssaute4");
-			put("Vegetables", "vegetables");
-			put("Chicken 5 oz.", "chicken5oz");
-			put("New York Steak 7 oz.", "newyorksteak7oz");
-			put("New York Strip Steak", "newyorkstripsteak");
-			put("GRilled Chicken Marsala", "grilledchickenmarsala");
-			put("Imam Bayildi", "imambayildi");
-			put("Mujaddara", "mujaddara");
-			put("Magluba", "magluba");
-			put("Biber Dolmasi", "biberdolmasi");
-			put("Fried Mozzarella Sticks", "friedmozzarellasticks");
-			put("Guacamole, Salsa & Chips", "guacamole");
-			put("Pot Stickers Chinese Pork Dumplings", "potstickers");
-			put("Handcut Fries", "handcutfries");
-			put("White or Brown rice", "whiteorbrownrice");
-			put("Black or Pinto Beans", "blackorpintobeans");
-			put("Sourcream", "sourcream");
-			put("Jalapenos", "jalapenos");
-			put("Refill chips and salsa", "refillchipsandsalsa");
-			put("SOPAPILLA", "sopapilla");
-			put("SOPAPILLA with ice cream", "sopapillawithicecream");
-			put("Chimi cheesecake", "chimicheesecake");
-		}
-	};
+
+  private List<String> dishNames = new ArrayList<String>();
 
   Handler getHandler() {
     return handler;
@@ -328,6 +273,9 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     cameraManager = new CameraManager(getApplication());
     viewfinderView.setCameraManager(cameraManager);
     
+    Intent intent = getIntent();
+    this.dishNames = intent.getStringArrayListExtra("dishNames");    
+
     // Set listener to change the size of the viewfinder rectangle.
     viewfinderView.setOnTouchListener(new View.OnTouchListener() {
       int lastX = -1;
@@ -425,6 +373,21 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       Bitmap bitmap = BitmapFactory.decodeStream(istr);
       return bitmap;
   }
+
+  private Bitmap getBitmapFromURL(String src) {
+	    try {
+	        URL url = new URL(src);
+	        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+	        connection.setDoInput(true);
+	        connection.connect();
+	        InputStream input = connection.getInputStream();
+	        Bitmap myBitmap = BitmapFactory.decodeStream(input);
+	        return myBitmap;
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        return null;
+	    }
+	}
 
   @Override
   protected void onResume() {
@@ -909,22 +872,33 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       
       // Iterates through the menu titles and see if there is a match.
       String imageName = "";
-      Set<String> titleSet = menuTitles.keySet();
-      for (String menuTitle : titleSet) {
+      for (String menuTitle : dishNames) {
     	  if (match(normOcrTextResult, menuTitle.replaceAll("\\s",""))) {
-    		  imageName = menuTitles.get(menuTitle);
+    		  imageName = menuTitle;
     		  break;
     	  }
       }
       if (imageName != null && imageName.length() > 0) { // MATCH.
     	  try {
-    		  Bitmap bm = getBitmapFromAsset(imageName + ".jpg"); // This can be replaced with API call.
-    		  imageResult.setImageBitmap(bm);
-    		  imageResult.setVisibility(View.VISIBLE);
-    		  imageResult.invalidate(); // Fix image flickering.
+    		  	URL url = new URL("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=" + URLEncoder.encode(imageName) + "&imgsz=small&rsz=1");
+    		  	URLConnection connection = url.openConnection();				
+    		  	String line;
+				StringBuilder builder = new StringBuilder();
+				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));while ((line = reader.readLine()) != null) {builder.append(line);}
+				JSONObject json = new JSONObject(builder.toString());
+				JSONObject responseData = json.getJSONObject("responseData");
+				JSONArray results = responseData.getJSONArray("results");
+				JSONObject result = (JSONObject) results.get(0);
+				String imgUrl = result.getString("tbUrl");
+				Bitmap bm = getBitmapFromURL(imgUrl);
+				imageResult.setImageBitmap(bm);
+				imageResult.setVisibility(View.VISIBLE);
+				imageResult.invalidate(); // Fix image flickering.
     	  } catch (IOException e) {
     		  Log.e(TAG, "Could not read image from asset folder", e);
-    	  }
+    	  } catch (JSONException e) {
+    		  Log.e(TAG, "JSON parsing failed", e);
+		}
       }
       else {
     	  // imageResult.setVisibility(View.INVISIBLE); // NO MATCH. // Fix image flickering.

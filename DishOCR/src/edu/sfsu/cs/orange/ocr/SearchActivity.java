@@ -6,20 +6,24 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -89,48 +93,75 @@ public class SearchActivity extends Activity {
 
 		searchButton.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				String searchTextStr = searchText.getText().toString();
-				String urlPath = "/locations/search?q=" + searchTextStr + "&count=100&client=" + clientId;
-				try {
-					String url = getSignKey(urlPath);
-					JSONObject json = queryJson(url);
+				AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+	                private ProgressDialog pd;
+	                @Override
+	                protected void onPreExecute() {
+	                         pd = new ProgressDialog(SearchActivity.this);
+	                         pd.setTitle("Processing...");
+	                         pd.setMessage("Please wait.");
+	                         pd.setCancelable(false);
+	                         pd.setIndeterminate(true);
+	                         pd.show();
+	         				 adapter.clear();
+	                }
+	                @Override
+	                protected Void doInBackground(Void... arg0) {
+	                        try {
+	                        	String searchTextStr = searchText.getText().toString();
+	            				String urlPath = "/locations/search?q=" + URLEncoder.encode(searchTextStr) + "&count=100&client=" + clientId;
+	            				try {
+	            					String url = getSignKey(urlPath);
+	            					JSONObject json = queryJson(url);
 
-					JSONArray jsonMainArr = json.getJSONArray("results");
-					adapter.clear();
-					for (int i = 0; i < jsonMainArr.length(); i++) {  // **line 2**
-					     JSONObject childJSONObject = jsonMainArr.getJSONObject(i);
-					     String id = childJSONObject.getString("id");
-					     
-					     JSONObject childJSONObjectGen = childJSONObject.getJSONObject("general");
-					     String name = childJSONObjectGen.getString("name");
-					     
-					     JSONObject childJSONObjectLoc = childJSONObject.getJSONObject("location");
-					     String city =  childJSONObjectLoc.getString("city");
-					     
-					     JSONObject childJSONObjectPh = childJSONObject.getJSONObject("phones");
-					     String phone =  childJSONObjectPh.getString("main");
-					     
-					     String key = name + "-" + city + "-" + phone;
-					     adapter.add(key);
-					     restaurants.put(key, id);
-					}					
-					adapter.notifyDataSetChanged();
-					listview.setAdapter(adapter);
-				} catch (SignatureException e) {
-					Log.d(TAG, "SignatureException");
-				}
-				// Intent intent = new Intent(FullImage1.this, Reco.class);
-				// startActivity(intent);
-				// finish();
-				catch (JSONException e) {
-					// TODO Auto-generated catch block
-					Log.d(TAG, e.getMessage());
-				}
+	            					JSONArray jsonMainArr = json.getJSONArray("results");
+	            					restaurants.clear();
+	            					for (int i = 0; i < jsonMainArr.length(); i++) {  // **line 2**
+	            					     JSONObject childJSONObject = jsonMainArr.getJSONObject(i);
+	            					     String id = childJSONObject.getString("id");
+	            					     
+	            					     JSONObject childJSONObjectGen = childJSONObject.getJSONObject("general");
+	            					     String name = childJSONObjectGen.getString("name");
+	            					     
+	            					     JSONObject childJSONObjectLoc = childJSONObject.getJSONObject("location");
+	            					     String city =  childJSONObjectLoc.getString("city");
+	            					     
+	            					     JSONObject childJSONObjectPh = childJSONObject.getJSONObject("phones");
+	            					     String phone =  childJSONObjectPh.getString("main");
+	            					     
+	            					     String key = name + "-" + city + "-" + phone;
+	            					     
+	            					     restaurants.put(key, id);
+	            					}					
+	            					
+	            				} catch (SignatureException e) {
+	            					Log.e(TAG, "SignatureException");
+	            				}
+	            				catch (JSONException e) {
+	            					// TODO Auto-generated catch block
+	            					Log.e(TAG, e.getMessage());
+	            				}
+	                               Thread.sleep(5000);
+	                        } catch (InterruptedException e) {
+	                			Log.e(TAG, e.getMessage());
+	                        }
+	                        return null;
+	                 }
+	                 @Override
+	                 protected void onPostExecute(Void result) {
+	                	 Set<String> keySet = restaurants.keySet();
+	                	 for (String key : keySet) {
+	                		 adapter.add(key);
+	                	 }
+	                	 adapter.notifyDataSetChanged();
+	                	 listview.setAdapter(adapter);
+	                     pd.dismiss();
+	                     findViewById(R.id.buttonSearch).setEnabled(true);
+	                 }
+	        };
+	        task.execute((Void[])null);
 			}
 		});
-
-		
-
 	}
 
 	private class StableArrayAdapter extends ArrayAdapter<String> {

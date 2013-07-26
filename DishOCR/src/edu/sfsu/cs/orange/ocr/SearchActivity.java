@@ -119,7 +119,7 @@ public class SearchActivity extends Activity {
 	                @Override
 	                protected void onPreExecute() {
 	                         pd = new ProgressDialog(SearchActivity.this);
-	                         pd.setTitle("Processing...");
+	                         pd.setTitle("Searching...");
 	                         pd.setMessage("Please wait.");
 	                         pd.setCancelable(false);
 	                         pd.setIndeterminate(true);

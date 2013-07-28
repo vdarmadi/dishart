@@ -23,8 +23,10 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -56,39 +58,59 @@ public class SearchActivity extends Activity {
 
 			@Override
 			public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
-				try {
-					final String item = (String) parent.getItemAtPosition(position);
-					String spId = (String) restaurants.get(item);
-					String urlPath = "/locations/" + spId + "/menu?client=" + clientId;
-					String url = getSignKey(urlPath);
-					JSONObject json = queryJson(url);
-					JSONArray jsonMainArr = json.getJSONArray("menus");
-					if (jsonMainArr.length() == 0) {
-						return;
+				final String item = (String) parent.getItemAtPosition(position);
+		    	// Access HTTP async, this is issue after Android 3.0.
+				AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+					private ProgressDialog pd;
+					@Override
+					protected void onPreExecute() {
+						pd = new ProgressDialog(SearchActivity.this);
+						pd.setTitle("Loading menu...");
+						pd.setMessage("Please wait.");
+						pd.setCancelable(false);
+						pd.setIndeterminate(true);
+						pd.show();
 					}
-					JSONObject jsonObject = (JSONObject) jsonMainArr.get(0);
-					JSONArray menus = jsonObject.getJSONArray("entries");
 
-					// Foods / Menus
-					dishNames.clear();
-					for (int j = 0; j < menus.length(); j++) { // **line 2**
-						JSONObject childJSONObject = menus.getJSONObject(j);
-						String dishName = childJSONObject.getString("title");
-						dishNames.add(dishName);
+					@Override
+					protected Void doInBackground(Void... arg0) {
+						try {							
+							String spId = (String) restaurants.get(item);
+							String urlPath = "/locations/" + spId + "/menu?client=" + clientId;
+							String url = getSignKey(urlPath);
+							JSONObject json = queryJson(url);
+							JSONArray jsonMainArr = json.getJSONArray("menus");
+							if (jsonMainArr.length() == 0) {
+								return null;
+							}
+							JSONObject jsonObject = (JSONObject) jsonMainArr.get(0);
+							JSONArray menus = jsonObject.getJSONArray("entries");
+
+							// Foods / Menus
+							dishNames.clear();
+							for (int j = 0; j < menus.length(); j++) {
+								JSONObject childJSONObject = menus.getJSONObject(j);
+								String dishName = childJSONObject.getString("title");
+								dishNames.add(dishName);
+							}
+							Intent intent = new Intent(SearchActivity.this, CaptureActivity.class);
+							intent.putStringArrayListExtra("dishNames", dishNames);
+							startActivity(intent);
+							finish();
+						} catch (SignatureException e) {
+        					Log.e(TAG, e.getMessage());
+						} catch (JSONException e) {
+        					Log.e(TAG, e.getMessage());
+						}
+						return null;
 					}
-					
-					Intent intent = new Intent(SearchActivity.this, CaptureActivity.class);
-				    intent.putStringArrayListExtra("dishNames", dishNames);
-					startActivity(intent);
-					finish();
 
-				} catch (SignatureException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (JSONException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+					@Override
+					protected void onPostExecute(Void result) {
+						pd.dismiss();
+					}
+				};
+				task.execute((Void[]) null);
 			}
 		});
 		listview.setOnTouchListener(new ListView.OnTouchListener() {
@@ -264,7 +286,6 @@ public class SearchActivity extends Activity {
 
 			url = "http://api.singleplatform.co" + urlPath + "&sig=" + result;
 
-			System.out.println(url);
 			return url;
 		} catch (Exception e) {
 			throw new java.security.SignatureException(

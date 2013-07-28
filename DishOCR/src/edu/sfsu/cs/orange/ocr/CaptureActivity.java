@@ -49,6 +49,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -214,6 +215,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private ImageView imageResult; // Place to display image when text is recognized.
   private double percentage = 0;
   private boolean substrMatch;
+  private boolean isLoadingImg;
 
   private List<String> dishNames = new ArrayList<String>();
 
@@ -878,27 +880,60 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     		  break;
     	  }
       }
-      if (imageName != null && imageName.length() > 0) { // MATCH.
-    	  try {
-    		  	URL url = new URL("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=" + URLEncoder.encode(imageName) + "&imgsz=small&rsz=1");
-    		  	URLConnection connection = url.openConnection();				
-    		  	String line;
-				StringBuilder builder = new StringBuilder();
-				BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));while ((line = reader.readLine()) != null) {builder.append(line);}
-				JSONObject json = new JSONObject(builder.toString());
-				JSONObject responseData = json.getJSONObject("responseData");
-				JSONArray results = responseData.getJSONArray("results");
-				JSONObject result = (JSONObject) results.get(0);
-				String imgUrl = result.getString("tbUrl");
-				Bitmap bm = getBitmapFromURL(imgUrl);
-				imageResult.setImageBitmap(bm);
-				imageResult.setVisibility(View.VISIBLE);
-				imageResult.invalidate(); // Fix image flickering.
-    	  } catch (IOException e) {
-    		  Log.e(TAG, "Could not read image from asset folder", e);
-    	  } catch (JSONException e) {
-    		  Log.e(TAG, "JSON parsing failed", e);
-		}
+      if (imageName != null && imageName.length() > 0 && !this.isLoadingImg) { // MATCH.
+    	  // Access HTTP async, this is issue after Android 3.0.
+    	  final String dishName = imageName;    	  	
+    	  AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+    		  private ProgressDialog pd;
+    		  Bitmap bm;
+    		  
+    		  @Override
+    		  protected void onPreExecute() {
+    			  isLoadingImg = true;
+    			  pd = new ProgressDialog(CaptureActivity.this);
+    			  pd.setTitle("Found matches...");
+    			  pd.setMessage("Please wait.");
+    			  pd.setCancelable(false);
+    			  pd.setIndeterminate(true);
+    			  pd.show();
+    		  }
+    		  
+    		  @Override
+    		  protected Void doInBackground(Void... arg0) {
+    			  try {
+    				  URL url = new URL("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=" + URLEncoder.encode(dishName) + "&imgsz=small&rsz=1");
+    				  URLConnection connection = url.openConnection();
+    				  BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+    				  String line;
+    				  StringBuilder builder = new StringBuilder();
+    				  while ((line = reader.readLine()) != null) {
+    					  builder.append(line);
+    				  }
+    				  JSONObject json = new JSONObject(builder.toString());
+    				  JSONObject responseData = json.getJSONObject("responseData");
+    				  JSONArray results = responseData.getJSONArray("results");
+    				  JSONObject rs = (JSONObject) results.get(0);
+    				  String imgUrl = rs.getString("tbUrl");
+    				  bm = getBitmapFromURL(imgUrl);
+    			  } 
+    			  catch (IOException e) {
+    				  Log.e(TAG, "Could not read image from Google", e);
+    			  } 
+    			  catch (JSONException e) {
+    				  Log.e(TAG, "Could not read image from Google", e);
+    			  }
+    			  return null;
+    		  }
+    		  @Override
+    		  protected void onPostExecute(Void result) {
+    			  pd.dismiss();
+    			  imageResult.setImageBitmap(bm);
+    			  imageResult.setVisibility(View.VISIBLE);
+    			  imageResult.invalidate(); // Fix image flickering.
+    			  isLoadingImg = false;
+    		  }
+    		};
+    		task.execute((Void[]) null);			
       }
       else {
     	  // imageResult.setVisibility(View.INVISIBLE); // NO MATCH. // Fix image flickering.

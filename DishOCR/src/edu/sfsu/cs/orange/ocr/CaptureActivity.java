@@ -62,6 +62,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -72,7 +73,12 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -362,8 +368,85 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     imageResult = (ImageView) findViewById(R.id.image_result); // Initialize ImageView.
     imageResult.setVisibility(View.INVISIBLE); // Don't display it first.
 
+    Display display = getWindowManager().getDefaultDisplay();
+    int width = display.getWidth();
+    int height = display.getHeight();
+    FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(width/2, (int)(height * 0.45), Gravity.CENTER_HORIZONTAL);
+    imageResult.setLayoutParams(layoutParams);
+
     isEngineReady = false;
-  }
+
+    ArrayList<String> listItems=new ArrayList<String>();
+    ArrayAdapter<String> adapter;
+
+    for (String menuTitle : dishNames) {
+        listItems.add(menuTitle);
+    }
+    java.util.Collections.sort(listItems);
+    ListView lv = (ListView) findViewById(R.id.restList);
+    adapter=new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, listItems);
+    lv.setAdapter(adapter);
+    lv.setOnItemClickListener(new OnItemClickListener() {
+
+		@Override
+		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+			  // Access HTTP async, this is issue after Android 3.0.
+	    	  final String dishName = ((TextView)view).getText().toString();;    	  	
+	    	  AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+	    		  private ProgressDialog pd;
+	    		  Bitmap bm;
+	    		  
+	    		  @Override
+	    		  protected void onPreExecute() {
+	    			  isLoadingImg = true;
+	    			  pd = new ProgressDialog(CaptureActivity.this);
+	    			  pd.setTitle("Found matches...");
+	    			  pd.setMessage("Please wait.");
+	    			  pd.setCancelable(false);
+	    			  pd.setIndeterminate(true);
+	    			  pd.show();
+	    		  }
+	    		  
+	    		  @Override
+	    		  protected Void doInBackground(Void... arg0) {
+	    			  try {
+	    				  URL url = new URL("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=" + URLEncoder.encode(dishName) + "&imgsz=small&rsz=1");
+	    				  URLConnection connection = url.openConnection();
+	    				  BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+	    				  String line;
+	    				  StringBuilder builder = new StringBuilder();
+	    				  while ((line = reader.readLine()) != null) {
+	    					  builder.append(line);
+	    				  }
+	    				  JSONObject json = new JSONObject(builder.toString());
+	    				  JSONObject responseData = json.getJSONObject("responseData");
+	    				  JSONArray results = responseData.getJSONArray("results");
+	    				  JSONObject rs = (JSONObject) results.get(0);
+	    				  //String imgUrl = rs.getString("tbUrl");
+	    				  String imgUrl = rs.getString("url");
+	    				  bm = getBitmapFromURL(imgUrl);
+	    			  } 
+	    			  catch (IOException e) {
+	    				  Log.e(TAG, "Could not read image from Google", e);
+	    			  } 
+	    			  catch (JSONException e) {
+	    				  Log.e(TAG, "Could not read image from Google", e);
+	    			  }
+	    			  return null;
+	    		  }
+	    		  @Override
+	    		  protected void onPostExecute(Void result) {
+	    			  pd.dismiss();
+	    			  imageResult.setImageBitmap(bm);
+	    			  imageResult.setVisibility(View.VISIBLE);
+	    			  imageResult.invalidate(); // Fix image flickering.
+	    			  isLoadingImg = false;
+	    		  }
+	    		};
+	    		task.execute((Void[]) null);
+		}
+	});
+    }
   
   /**
    * Method for reading image from asset folder.
@@ -913,7 +996,8 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     				  JSONObject responseData = json.getJSONObject("responseData");
     				  JSONArray results = responseData.getJSONArray("results");
     				  JSONObject rs = (JSONObject) results.get(0);
-    				  String imgUrl = rs.getString("tbUrl");
+    				  //String imgUrl = rs.getString("tbUrl");
+    				  String imgUrl = rs.getString("url");
     				  bm = getBitmapFromURL(imgUrl);
     			  } 
     			  catch (IOException e) {

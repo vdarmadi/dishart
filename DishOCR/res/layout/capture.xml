@@ -23,18 +23,25 @@
                android:layout_width="fill_parent"
                android:layout_height="fill_parent"
                android:layout_centerInParent="true"/>
-     
+   
   <edu.sfsu.cs.orange.ocr.ViewfinderView
       android:id="@+id/viewfinder_view"
       android:layout_width="fill_parent"
       android:layout_height="fill_parent"
       android:background="#0000"/>
-
+   
   <ImageView
 		android:id="@+id/image_result"
-		android:layout_width="160dip"
-		android:layout_height="160dip"
+		android:layout_width="match_parent"
+    	android:layout_height="match_parent"
 		android:layout_gravity="top|center" />
+  
+  <ListView
+		android:id="@+id/restList"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:drawSelectorOnTop="false"
+        android:layout_gravity="bottom"/>
 
   <LinearLayout android:id="@+id/result_view"
                 android:orientation="vertical"
@@ -221,5 +228,4 @@
      -->
      
   </RelativeLayout>
-
 </FrameLayout>

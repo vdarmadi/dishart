@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -79,6 +80,8 @@ import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
+import android.widget.RelativeLayout.LayoutParams;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -410,21 +413,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 	    		  @Override
 	    		  protected Void doInBackground(Void... arg0) {
 	    			  try {
-	    				  URL url = new URL("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=" + URLEncoder.encode(dishName) + "&imgsz=small&rsz=1");
-	    				  URLConnection connection = url.openConnection();
-	    				  BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-	    				  String line;
-	    				  StringBuilder builder = new StringBuilder();
-	    				  while ((line = reader.readLine()) != null) {
-	    					  builder.append(line);
-	    				  }
-	    				  JSONObject json = new JSONObject(builder.toString());
-	    				  JSONObject responseData = json.getJSONObject("responseData");
-	    				  JSONArray results = responseData.getJSONArray("results");
-	    				  JSONObject rs = (JSONObject) results.get(0);
-	    				  //String imgUrl = rs.getString("tbUrl");
-	    				  String imgUrl = rs.getString("url");
-	    				  bm = getBitmapFromURL(imgUrl);
+	    				  bm = CaptureActivity.getImage(dishName);
 	    			  } 
 	    			  catch (IOException e) {
 	    				  Log.e(TAG, "Could not read image from Google", e);
@@ -459,7 +448,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       return bitmap;
   }
 
-  private Bitmap getBitmapFromURL(String src) {
+  private static Bitmap getBitmapFromURL(String src) {
 	    try {
 	        URL url = new URL(src);
 	        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -944,13 +933,23 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     
     if (CONTINUOUS_DISPLAY_RECOGNIZED_TEXT) {
       // Display the recognized text on the screen
-      statusViewTop.setText(ocrResult.getText());
-      int scaledSize = Math.max(22, 32 - ocrResult.getText().length() / 4);
+      //statusViewTop.setText(ocrResult.getText());
+      String text = "TRYING TO SCAN...\n" + ocrResult.getText();
+      statusViewTop.setText(text);
+      //int scaledSize = Math.max(22, 32 - ocrResult.getText().length() / 4);
+      int scaledSize = Math.max(22, 32 - text.length() / 4);
       statusViewTop.setTextSize(TypedValue.COMPLEX_UNIT_SP, scaledSize);
       statusViewTop.setTextColor(Color.BLACK);
       statusViewTop.setBackgroundResource(R.color.status_top_text_background);
 
       statusViewTop.getBackground().setAlpha(meanConfidence * (255 / 100));
+      Display display = getWindowManager().getDefaultDisplay();
+      int height = display.getHeight();
+      //RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
+      //rlp.setMargins(0, 0, 0, height / 4); // llp.setMargins(left, top, right, bottom);
+      //statusViewTop.setLayoutParams(rlp);
+      statusViewTop.setGravity(Gravity.CENTER_HORIZONTAL);
+      statusViewTop.setPadding(0, 0, 0, height/4);
 
       String ocrTextResult = ocrResult.getText(); // Recognized text result.
       String normOcrTextResult = ocrTextResult.replace("\n", "").replace("\r", "").replaceAll("\\s",""); // Remove line breaks, whitespace, etc. 
@@ -984,21 +983,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     		  @Override
     		  protected Void doInBackground(Void... arg0) {
     			  try {
-    				  URL url = new URL("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=" + URLEncoder.encode(dishName) + "&imgsz=small&rsz=1");
-    				  URLConnection connection = url.openConnection();
-    				  BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-    				  String line;
-    				  StringBuilder builder = new StringBuilder();
-    				  while ((line = reader.readLine()) != null) {
-    					  builder.append(line);
-    				  }
-    				  JSONObject json = new JSONObject(builder.toString());
-    				  JSONObject responseData = json.getJSONObject("responseData");
-    				  JSONArray results = responseData.getJSONArray("results");
-    				  JSONObject rs = (JSONObject) results.get(0);
-    				  //String imgUrl = rs.getString("tbUrl");
-    				  String imgUrl = rs.getString("url");
-    				  bm = getBitmapFromURL(imgUrl);
+    				  bm = CaptureActivity.getImage(dishName);
     			  } 
     			  catch (IOException e) {
     				  Log.e(TAG, "Could not read image from Google", e);
@@ -1035,6 +1020,48 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
           + " - Found Substring Match: " + this.substrMatch + " - Focus Mode: " + currentFocusMode); // Add more debug info.
     }
   }
+
+  private static Bitmap getImage(final String dishName)
+			throws MalformedURLException, IOException, JSONException {
+		String imgUrl = null;
+		URL url = new URL("http://api.yummly.com/v1/api/recipes?_app_id=6320d0cc&_app_key=0474538e4ffa6899dda75fb428a578f4&q=" + URLEncoder.encode(dishName));
+		URLConnection connection = url.openConnection();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+		String line;
+		StringBuilder builder = new StringBuilder();
+		while ((line = reader.readLine()) != null) {
+			builder.append(line);
+		}
+		JSONObject jsonObject = new JSONObject(builder.toString());
+		JSONArray jsonArray = jsonObject.getJSONArray("matches");
+		if (jsonArray != null && jsonArray.length() > 0) {  // **line 2**
+			JSONObject object = jsonArray.getJSONObject(0);
+			JSONArray jsonArray2 = object.getJSONArray("smallImageUrls");
+			if (jsonArray2 != null && jsonArray2.length() > 0) {
+				imgUrl = jsonArray2.getString(0);
+				imgUrl = imgUrl.replaceFirst("\\.s\\.", "\\.l\\.");
+				Log.d(TAG, "Got image from yummly " + imgUrl);
+			}
+		}
+		
+		if (imgUrl == null) {
+			url = new URL("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=" + URLEncoder.encode(dishName) + "&imgsz=medium&rsz=1");
+			connection = url.openConnection();
+			reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			builder = new StringBuilder();
+			while ((line = reader.readLine()) != null) {
+				builder.append(line);
+			}
+			JSONObject json = new JSONObject(builder.toString());
+			JSONObject responseData = json.getJSONObject("responseData");
+			JSONArray results = responseData.getJSONArray("results");
+			JSONObject rs = (JSONObject) results.get(0);
+			//String imgUrl = rs.getString("tbUrl");
+			imgUrl = rs.getString("url");
+			Log.d(TAG, "Got image from Google " + imgUrl);
+		}
+		return getBitmapFromURL(imgUrl);
+	}
 
 	private static int minimum(int a, int b, int c) {
 		return Math.min(Math.min(a, b), c);
@@ -1205,7 +1232,8 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       statusViewBottom.setText("");
       statusViewBottom.setTextSize(14);
       statusViewBottom.setTextColor(getResources().getColor(R.color.status_text));
-      statusViewBottom.setVisibility(View.VISIBLE);
+      //statusViewBottom.setVisibility(View.VISIBLE);
+      statusViewBottom.setVisibility(View.GONE);
     }
     if (CONTINUOUS_DISPLAY_RECOGNIZED_TEXT) {
       statusViewTop.setText("");

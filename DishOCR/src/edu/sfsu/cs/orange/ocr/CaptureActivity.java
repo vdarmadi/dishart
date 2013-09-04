@@ -226,6 +226,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private boolean isLoadingImg;
 
   private List<String> dishNames = new ArrayList<String>();
+  private String prevDishName = "";
 
   Handler getHandler() {
     return handler;
@@ -961,7 +962,8 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     		  break;
     	  }
       }
-      if (imageName != null && imageName.length() > 0 && !this.isLoadingImg) { // MATCH.
+      if (imageName != null && imageName.length() > 0 && !this.isLoadingImg && !this.prevDishName.equals(imageName)) { // MATCH.
+    	  this.prevDishName = imageName;
     	  // Access HTTP async, this is issue after Android 3.0.
     	  final String dishName = imageName;    	  	
     	  AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {

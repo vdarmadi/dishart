@@ -31,6 +31,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.codec.binary.Base64;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -80,8 +81,6 @@ import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
-import android.widget.RelativeLayout.LayoutParams;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -1043,7 +1042,41 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 				Log.d(TAG, "Got image from yummly " + imgUrl);
 			}
 		}
-		
+		if (imgUrl == null) {
+			String accountKey = "zOulTOJsknHTtf3zDOaL30amNg3OjIHmbhK8cu26nsM";
+			byte[] accountKeyBytes = Base64.encodeBase64((accountKey + ":" + accountKey).getBytes());
+			String accountKeyEnc = new String(accountKeyBytes);
+
+			URL url2 = new URL("https://api.datamarket.azure.com/Bing/Search/v1/Composite?Sources=%27image%27&Query=%27" + URLEncoder.encode(dishName) + "%27&ImageFilters=%27Size%3AMedium%2BFace%3AOther%27&$format=json");
+			URLConnection urlConnection = url2.openConnection();
+			urlConnection.setRequestProperty("Authorization", "Basic " + accountKeyEnc);			
+			
+			reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+			builder = new StringBuilder();
+			while ((line = reader.readLine()) != null) {
+				builder.append(line);
+			}
+			JSONObject json2 = new JSONObject(builder.toString());
+			if (json2 != null) {
+				jsonObject = json2.getJSONObject("d");
+				if (jsonObject != null) {
+					JSONArray array = jsonObject.getJSONArray("results");
+					if (array != null && array.length() > 0) {
+						JSONObject jsonObject2 = array.getJSONObject(0);
+						if (jsonObject2 != null) {
+							JSONArray array2 = jsonObject2.getJSONArray("Image");
+							if (array2 != null && array2.length() > 0) {
+								JSONObject jsonObject3 = array2.getJSONObject(0);
+								if (jsonObject3 != null) {
+									imgUrl = jsonObject3.getString("MediaUrl");
+									Log.d(TAG, "Got image from Bing " + imgUrl);
+								}
+							}
+						}
+					}
+				}
+			}
+		}		
 		if (imgUrl == null) {
 			url = new URL("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=" + URLEncoder.encode(dishName) + "&imgsz=medium&rsz=1");
 			connection = url.openConnection();

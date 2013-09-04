@@ -73,11 +73,13 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -227,6 +229,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
   private List<String> dishNames = new ArrayList<String>();
   private String prevDishName = "";
+  private Button backButton;
 
   Handler getHandler() {
     return handler;
@@ -285,7 +288,18 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     viewfinderView.setCameraManager(cameraManager);
     
     Intent intent = getIntent();
-    this.dishNames = intent.getStringArrayListExtra("dishNames");    
+    this.dishNames = intent.getStringArrayListExtra("dishNames");
+    
+    backButton = (Button) findViewById(R.id.backButton);
+    backButton.setOnClickListener(new OnClickListener() {
+		@Override
+		public void onClick(View arg0) {
+			Intent intent = new Intent(CaptureActivity.this, GoogleMapActivity.class);
+			startActivity(intent);
+		}
+	});
+
+
 
     // Set listener to change the size of the viewfinder rectangle.
     viewfinderView.setOnTouchListener(new View.OnTouchListener() {
@@ -552,7 +566,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     DecodeHandler.resetDecodeState();
     handler.resetState();
     if (shutterButton != null && DISPLAY_SHUTTER_BUTTON) {
-      shutterButton.setVisibility(View.VISIBLE);
+      //shutterButton.setVisibility(View.VISIBLE);
     }
   }
 
@@ -1278,7 +1292,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     viewfinderView.setVisibility(View.VISIBLE);
     cameraButtonView.setVisibility(View.VISIBLE);
     if (DISPLAY_SHUTTER_BUTTON) {
-      shutterButton.setVisibility(View.VISIBLE);
+      //shutterButton.setVisibility(View.VISIBLE);
     }
     lastResult = null;
     viewfinderView.removeResultText();
@@ -1305,7 +1319,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   @SuppressWarnings("unused")
   void setButtonVisibility(boolean visible) {
     if (shutterButton != null && visible == true && DISPLAY_SHUTTER_BUTTON) {
-      shutterButton.setVisibility(View.VISIBLE);
+      //shutterButton.setVisibility(View.VISIBLE);
     } else if (shutterButton != null) {
       shutterButton.setVisibility(View.GONE);
     }

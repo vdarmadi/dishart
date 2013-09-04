@@ -92,7 +92,7 @@ public class GoogleMapActivity extends FragmentActivity {
 			@Override
 			protected void onPreExecute() {
 				pd = new ProgressDialog(GoogleMapActivity.this);
-				pd.setTitle("Searching...");
+				pd.setTitle("Searching Restaurants Nearby...");
 				pd.setMessage("Please wait.");
 				pd.setCancelable(false);
 				pd.setIndeterminate(true);

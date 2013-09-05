@@ -194,6 +194,8 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private TextView statusViewTop;
   private TextView ocrResultView;
   private TextView translationView;
+  private TextView textResult;
+  private static String tResult;
   private View cameraButtonView;
   private View resultView;
   private View progressView;
@@ -282,6 +284,9 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     translationView = (TextView) findViewById(R.id.translation_text_view);
     registerForContextMenu(translationView);
     
+    textResult = (TextView) findViewById(R.id.text_result);
+    textResult.setVisibility(View.INVISIBLE);
+
     progressView = (View) findViewById(R.id.indeterminate_progress_indicator_view);
 
     cameraManager = new CameraManager(getApplication());
@@ -428,6 +433,11 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 	    		  protected Void doInBackground(Void... arg0) {
 	    			  try {
 	    				  bm = CaptureActivity.getImage(dishName);
+	    				  if (bm == null) {
+	    					  Log.d(TAG, "Got image default");
+	    					  tResult = dishName + "\nfrom: Default";
+	    					  bm = getBitmapFromAsset("default.jpg");
+	    				  }
 	    			  } 
 	    			  catch (IOException e) {
 	    				  Log.e(TAG, "Could not read image from Google", e);
@@ -443,6 +453,9 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 	    			  imageResult.setImageBitmap(bm);
 	    			  imageResult.setVisibility(View.VISIBLE);
 	    			  imageResult.invalidate(); // Fix image flickering.
+	    			  textResult.setText(tResult);
+	    			  textResult.setVisibility(View.VISIBLE);
+	    			  textResult.invalidate();
 	    			  isLoadingImg = false;
 	    		  }
 	    		};
@@ -472,7 +485,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 	        Bitmap myBitmap = BitmapFactory.decodeStream(input);
 	        return myBitmap;
 	    } catch (IOException e) {
-	        e.printStackTrace();
+	        Log.e(TAG, e.getMessage());
 	        return null;
 	    }
 	}
@@ -999,6 +1012,11 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     		  protected Void doInBackground(Void... arg0) {
     			  try {
     				  bm = CaptureActivity.getImage(dishName);
+    				  if (bm == null) {
+    					  Log.d(TAG, "Got image default");
+    					  tResult = dishName + "\nfrom: Default";
+    					  bm = getBitmapFromAsset("default.jpg");
+    				  }
     			  } 
     			  catch (IOException e) {
     				  Log.e(TAG, "Could not read image from Google", e);
@@ -1014,6 +1032,9 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     			  imageResult.setImageBitmap(bm);
     			  imageResult.setVisibility(View.VISIBLE);
     			  imageResult.invalidate(); // Fix image flickering.
+    			  textResult.setText(tResult);
+    			  textResult.setVisibility(View.VISIBLE);
+    			  textResult.invalidate();
     			  isLoadingImg = false;
     		  }
     		};
@@ -1056,6 +1077,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 				imgUrl = jsonArray2.getString(0);
 				imgUrl = imgUrl.replaceFirst("\\.s\\.", "\\.l\\.");
 				Log.d(TAG, "Got image from yummly " + imgUrl);
+				tResult = dishName + "\nfrom: Yummly";
 			}
 		}
 		if (imgUrl == null) {
@@ -1086,6 +1108,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 								if (jsonObject3 != null) {
 									imgUrl = jsonObject3.getString("MediaUrl");
 									Log.d(TAG, "Got image from Bing " + imgUrl);
+									tResult = dishName + "\nfrom: Bing";
 								}
 							}
 						}
@@ -1094,20 +1117,27 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 			}
 		}		
 		if (imgUrl == null) {
-			url = new URL("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=" + URLEncoder.encode(dishName) + "&imgsz=medium&rsz=1");
-			connection = url.openConnection();
-			reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			builder = new StringBuilder();
-			while ((line = reader.readLine()) != null) {
-				builder.append(line);
+			try {
+				url = new URL("https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=" + URLEncoder.encode(dishName) + "&imgsz=medium&rsz=1");
+				connection = url.openConnection();
+				reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+				builder = new StringBuilder();
+				while ((line = reader.readLine()) != null) {
+					builder.append(line);
+				}
+				JSONObject json = new JSONObject(builder.toString());
+				JSONObject responseData = json.getJSONObject("responseData");
+				JSONArray results = responseData.getJSONArray("results");
+				JSONObject rs = (JSONObject) results.get(0);
+				//String imgUrl = rs.getString("tbUrl");
+				imgUrl = rs.getString("url");
+				Log.d(TAG, "Got image from Google " + imgUrl);
+				tResult = dishName + "\nfrom: Google";
 			}
-			JSONObject json = new JSONObject(builder.toString());
-			JSONObject responseData = json.getJSONObject("responseData");
-			JSONArray results = responseData.getJSONArray("results");
-			JSONObject rs = (JSONObject) results.get(0);
-			//String imgUrl = rs.getString("tbUrl");
-			imgUrl = rs.getString("url");
-			Log.d(TAG, "Got image from Google " + imgUrl);
+			catch (Exception e) {
+				Log.e(TAG, "Failed from Google" + e.getMessage());
+				return null;
+			}
 		}
 		return getBitmapFromURL(imgUrl);
 	}

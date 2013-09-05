@@ -36,6 +36,15 @@
     	android:layout_height="match_parent"
 		android:layout_gravity="top|center" />
   
+  <TextView android:id="@+id/text_result"
+ 		android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/result_minor_text"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:layout_gravity="right|bottom"
+        />
+  
   <ListView
 		android:id="@+id/restList"
         android:layout_width="fill_parent"

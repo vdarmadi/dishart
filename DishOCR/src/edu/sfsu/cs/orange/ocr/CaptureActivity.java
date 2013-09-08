@@ -74,6 +74,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -408,6 +409,12 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     ListView lv = (ListView) findViewById(R.id.restList);
     adapter=new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, listItems);
     lv.setAdapter(adapter);
+
+    LayoutParams lp = (LayoutParams) lv.getLayoutParams();
+    
+    lp.height = (int) (height * 0.45);
+    lv.setLayoutParams(lp);
+
     lv.setOnItemClickListener(new OnItemClickListener() {
 
 		@Override
@@ -961,7 +968,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     if (CONTINUOUS_DISPLAY_RECOGNIZED_TEXT) {
       // Display the recognized text on the screen
       //statusViewTop.setText(ocrResult.getText());
-      String text = "TRYING TO SCAN...\n" + ocrResult.getText();
+      String text = "SCANNING...\n" + ocrResult.getText();
       statusViewTop.setText(text);
       //int scaledSize = Math.max(22, 32 - ocrResult.getText().length() / 4);
       int scaledSize = Math.max(22, 32 - text.length() / 4);
@@ -970,13 +977,13 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       statusViewTop.setBackgroundResource(R.color.status_top_text_background);
 
       statusViewTop.getBackground().setAlpha(meanConfidence * (255 / 100));
-      Display display = getWindowManager().getDefaultDisplay();
-      int height = display.getHeight();
+      //Display display = getWindowManager().getDefaultDisplay();
+      //int height = display.getHeight();
       //RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
       //rlp.setMargins(0, 0, 0, height / 4); // llp.setMargins(left, top, right, bottom);
       //statusViewTop.setLayoutParams(rlp);
-      statusViewTop.setGravity(Gravity.CENTER_HORIZONTAL);
-      statusViewTop.setPadding(0, 0, 0, height/4);
+      //statusViewTop.setGravity(Gravity.CENTER_HORIZONTAL);
+      //statusViewTop.setPadding(0, 0, 0, height/4);
 
       String ocrTextResult = ocrResult.getText(); // Recognized text result.
       String normOcrTextResult = ocrTextResult.replace("\n", "").replace("\r", "").replaceAll("\\s",""); // Remove line breaks, whitespace, etc. 

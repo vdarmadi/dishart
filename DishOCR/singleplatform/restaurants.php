@@ -69,12 +69,14 @@ while($row = mysql_fetch_array($result))
 	$location_id = $row["location_id"];
 	$latitude = $row["latitude"];
 	$longitude = $row["longitude"];
+    $phone = $row["phone"];
 	//echo "Name: ".$name."<br>";
 	$results[] = array(
 						"name"=>$name,
 						"location_id"=>$location_id,
 						"latitude"=>$latitude,
-						"longitude"=>$longitude
+						"longitude"=>$longitude,
+                        "phone"=>$phone
 						);
 }
 }

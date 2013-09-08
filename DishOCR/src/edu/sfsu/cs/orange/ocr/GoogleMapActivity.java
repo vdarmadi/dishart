@@ -5,11 +5,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.security.SignatureException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.json.JSONArray;
@@ -44,7 +49,7 @@ public class GoogleMapActivity extends FragmentActivity {
 	private static final String TAG = GoogleMapActivity.class.getSimpleName();
 	private  Location location;
 	private String clientId = "cqgqdiwm4861uty3kbolywc1h";
-	private ArrayList dishNames = new ArrayList<String>();
+	private Set dishNames = new HashSet<String>();
 	
 	private static String readAll(Reader rd) throws IOException {
 		StringBuilder sb = new StringBuilder();
@@ -108,24 +113,61 @@ public class GoogleMapActivity extends FragmentActivity {
 
 						JSONArray jsonMainArr = json.getJSONArray("results");
 						restaurants.clear();
+						Set phones = new HashSet<String>();
 						for (int i = 0; i < jsonMainArr.length(); i++) { // **line 2**
 							JSONObject childJSONObject = jsonMainArr.getJSONObject(i);
 							String id = childJSONObject.getString("location_id");
 							String name = childJSONObject.getString("name");
 							double rLat = childJSONObject.getDouble("latitude");
 							double rLong = childJSONObject.getDouble("longitude");
-							
+							String ph = childJSONObject.getString("phone").replaceAll("[^0-9]", "").trim();
+
 							Restaurant r = new Restaurant();
 							r.setId(id);
 							r.setName(name);
 							r.setLatitude(rLat);
-							r.setLongitude(rLong);														
+							r.setLongitude(rLong);
+							r.setSource("SP");
 							restaurants.put(name, r);
-							
+							phones.add(ph);
+						}						
+						
+						URL url2 = new URL("http://api.locu.com/v1_0/venue/search/?api_key=27412850c47e4141c8d5948abdf63392eb33d863&location="+latitude+","+longitude+"&radius=1000&has_menu=true");
+						URLConnection urlConnection = url2.openConnection();
+									
+						InputStream is2 = urlConnection.getInputStream();
+						BufferedReader rd2 = new BufferedReader(new InputStreamReader(is2, Charset.forName("UTF-8")));
+						String jsonText2 = readAll(rd2);
+						JSONObject json2 = new JSONObject(jsonText2);
+
+						JSONArray jsonArray = json2.getJSONArray("objects");
+						
+						for (int i = 0; i < jsonArray.length(); i++) {  // **line 2**
+						     JSONObject childJSONObject = jsonArray.getJSONObject(i);
+						     String id = childJSONObject.getString("id");
+						     double lat = childJSONObject.getDouble("lat");
+						     double lon = childJSONObject.getDouble("long");
+						     String phone = childJSONObject.getString("phone").replaceAll("[^0-9]", "").trim();
+						     String name = childJSONObject.getString("name");
+						     
+						     Restaurant r = new Restaurant();
+						     r.setId(id);
+						     r.setLatitude(lat);
+						     r.setLongitude(lon);
+						     r.setName(name);
+						     r.setSource("Locu");
+						     if(!phones.contains(phone)) {
+							     restaurants.put(name, r);
+							     phones.add(phone); 
+						     }						
 						}
 
 					} catch (JSONException e) {
 						// TODO Auto-generated catch block
+						Log.e(TAG, e.getMessage());
+					} catch (MalformedURLException e) {
+						Log.e(TAG, e.getMessage());
+					} catch (IOException e) {
 						Log.e(TAG, e.getMessage());
 					}
 					Thread.sleep(5000);
@@ -176,27 +218,64 @@ public class GoogleMapActivity extends FragmentActivity {
 							@Override
 							protected Void doInBackground(Void... arg0) {
 								try {
+									List<String> dishNameBlacklist = Arrays.asList("Curry","Bbq","Beef","Appetizers","Beverages", "Chicken", "Desserts", "Family Meals", "Home Style Sides", "Individual Meals", "Turkey", "Kids Meals");
 									Restaurant r = restaurants.get(item);
-									String spId = r.getId();
-									String urlPath = "/locations/" + spId + "/menu?client=" + clientId;
-									String url = getSignKey(urlPath);
-									JSONObject json = queryJson(url);
-									JSONArray jsonMainArr = json.getJSONArray("menus");
-									if (jsonMainArr.length() == 0) {
-										return null;
+									if ("SP".equals(r.getSource())) {
+										String spId = r.getId();
+										String urlPath = "/locations/" + spId + "/menu?client=" + clientId;
+										String url = getSignKey(urlPath);
+										JSONObject json = queryJson(url);
+										JSONArray jsonMainArr = json.getJSONArray("menus");
+										if (jsonMainArr.length() == 0) {
+											return null;
+										}
+										JSONObject jsonObject = (JSONObject) jsonMainArr.get(0);
+										JSONArray menus = jsonObject.getJSONArray("entries");
+	
+										// Foods / Menus
+										dishNames.clear();
+										for (int j = 0; j < menus.length(); j++) {
+											JSONObject childJSONObject = menus.getJSONObject(j);
+											String dishName = childJSONObject.getString("title");
+											
+											if (!dishNameBlacklist.contains(dishName)) {
+												dishNames.add(dishName);
+											}
+										}
 									}
-									JSONObject jsonObject = (JSONObject) jsonMainArr.get(0);
-									JSONArray menus = jsonObject.getJSONArray("entries");
+									else if ("Locu".equals(r.getSource())) {
+										String locuId = r.getId();
+										String url = "http://api.locu.com/v1_0/venue/"+locuId+"/?api_key=27412850c47e4141c8d5948abdf63392eb33d863";
+										JSONObject json2 = queryJson(url);
 
-									// Foods / Menus
-									dishNames.clear();
-									for (int j = 0; j < menus.length(); j++) {
-										JSONObject childJSONObject = menus.getJSONObject(j);
-										String dishName = childJSONObject.getString("title");
-										dishNames.add(dishName);
+										JSONArray jsonArray = json2.getJSONArray("objects");
+										JSONObject jsonObject = jsonArray.getJSONObject(0);
+										JSONArray jsonArray2 = jsonObject.getJSONArray("menus");
+																				
+										for (int i = 0; i < jsonArray2.length(); i++) {  // **line 2**
+										     JSONObject childJSONObject = jsonArray2.getJSONObject(i);
+										     JSONArray jsonArray3 = childJSONObject.getJSONArray("sections");
+										     for (int j = 0; j < jsonArray3.length(); j++) {
+										    	 JSONObject jsonObject2 = jsonArray3.getJSONObject(j);
+										    	 JSONArray jsonArray4 = jsonObject2.getJSONArray("subsections");										    	 
+										    	 for (int k = 0; k < jsonArray4.length(); k++) {
+										    		 JSONObject jsonObject3 = jsonArray4.getJSONObject(k);
+										    		 JSONArray jsonArray5 = jsonObject3.getJSONArray("contents");
+										    		 for (int l = 0; l < jsonArray5.length(); l++) {
+										    			 JSONObject jsonObject4 = jsonArray5.getJSONObject(l);
+										    			 if ("ITEM".equals(jsonObject4.get("type"))) {
+										    				 String dishName = jsonObject4.getString("name");
+										    				 if (!dishNameBlacklist.contains(dishName)) {
+										    					 dishNames.add(dishName);
+										    				 }
+										    			 }
+										    		 }
+										    	 } 
+										     }
+										}
 									}
 									Intent intent = new Intent(GoogleMapActivity.this, CaptureActivity.class);
-									intent.putStringArrayListExtra("dishNames", dishNames);
+									intent.putStringArrayListExtra("dishNames", new ArrayList<String>(dishNames));
 									startActivity(intent);
 									finish();
 								} catch (SignatureException e) {

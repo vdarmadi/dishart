@@ -29,4 +29,11 @@ public class Restaurant {
 	String name;
 	double latitude;
 	double longitude;
+	String source;
+	public String getSource() {
+		return source;
+	}
+	public void setSource(String source) {
+		this.source = source;
+	}
 }

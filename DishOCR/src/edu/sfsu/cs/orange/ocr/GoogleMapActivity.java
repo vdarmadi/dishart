@@ -28,10 +28,12 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMarkerDragListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
@@ -132,7 +134,7 @@ public class GoogleMapActivity extends FragmentActivity {
 							phones.add(ph);
 						}						
 						
-						URL url2 = new URL("http://api.locu.com/v1_0/venue/search/?api_key=27412850c47e4141c8d5948abdf63392eb33d863&location="+latitude+","+longitude+"&radius=1000&has_menu=true");
+						URL url2 = new URL("http://api.locu.com/v1_0/venue/search/?api_key=27412850c47e4141c8d5948abdf63392eb33d863&location="+latitude+","+longitude+"&radius=1000&has_menu=true&category=restaurant");
 						URLConnection urlConnection = url2.openConnection();
 									
 						InputStream is2 = urlConnection.getInputStream();
@@ -184,14 +186,31 @@ public class GoogleMapActivity extends FragmentActivity {
 				mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
 				mMap.setMyLocationEnabled(true);
 				mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-				
+				Set latLong = new HashSet<String>();
 				for (String id : (Set<String>)restaurants.keySet()) {
 					Restaurant r = restaurants.get(id);
+					float marker = 0;
+					if ("SP".equals(r.getSource())) {
+						marker = BitmapDescriptorFactory.HUE_AZURE;
+					} else {
+						marker = BitmapDescriptorFactory.HUE_ORANGE;
+					}
+					double finalLat = r.getLatitude();
+					double finalLong = r.getLongitude();
+					if (latLong.contains(Double.toString(finalLat) + Double.toString(finalLong))) {
+						double start = 0.001;
+						double end = 0.002;
+						double random = new java.util.Random().nextDouble();
+						double randomOffset = start + (random * (end - start));
+						finalLong += randomOffset;
+					}
 					mMap.addMarker(new MarkerOptions()
-					.position(new LatLng(r.getLatitude(), r.getLongitude()))
+					.position(new LatLng(finalLat, finalLong))
 					.title(r.getName())
+					.draggable(true)
 					.snippet(r.getName())
-					.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+					.icon(BitmapDescriptorFactory.defaultMarker(marker)));
+					latLong.add(Double.toString(finalLat) + Double.toString(finalLong));
 				}
 				
 				mMap.getUiSettings().setCompassEnabled(true);

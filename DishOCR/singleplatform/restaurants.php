@@ -54,7 +54,7 @@ BETWEEN -140
 AND -110
 )
 LIMIT 0 , 30*/
-$query = "SELECT * FROM $usertable WHERE (latitude BETWEEN ($lat - 1) AND ($lat + 1)) AND (longitude BETWEEN ($long - 1) AND ($long + 1)) order by
+$query = "SELECT * FROM $usertable WHERE businessType = 'Restaurant' and outOfBusiness = 'f' AND (latitude BETWEEN ($lat - 1) AND ($lat + 1)) AND (longitude BETWEEN ($long - 1) AND ($long + 1)) order by
 ABS(ABS(ABS(latitude) - ABS($lat)) +
 ABS(ABS(longitude)- ABS($long))) ASC LIMIT 0, 50";
 
@@ -70,7 +70,7 @@ while($row = mysql_fetch_array($result))
 	$latitude = $row["latitude"];
 	$longitude = $row["longitude"];
     $phone = $row["phone"];
-	//echo "Name: ".$name."<br>";
+    //echo "Name: ".$name."<br>";
 	$results[] = array(
 						"name"=>$name,
 						"location_id"=>$location_id,

@@ -49,7 +49,7 @@ final class CameraConfigurationManager {
   // accidental selection of very low resolution on some devices.
   private static final int MIN_PREVIEW_PIXELS = 470 * 320; // normal screen
   private static final int MAX_PREVIEW_PIXELS = 800 * 600; // more than large/HD screen
-
+  
   private final Context context;
   private Point screenResolution;
   private Point cameraResolution;
@@ -69,12 +69,12 @@ final class CameraConfigurationManager {
     int height = display.getHeight();
     // We're landscape-only, and have apparently seen issues with display thinking it's portrait 
     // when waking from sleep. If it's not landscape, assume it's mistaken and reverse them:
-    if (width < height) {
-      Log.i(TAG, "Display reports portrait orientation; assuming this is incorrect");
-      int temp = width;
-      width = height;
-      height = temp;
-    }
+    //if (width < height) {
+    //  Log.i(TAG, "Display reports portrait orientation; assuming this is incorrect");
+    //  int temp = width;
+    //  width = height;
+    // height = temp;
+    //}
     screenResolution = new Point(width, height);
     Log.i(TAG, "Screen resolution: " + screenResolution);
     cameraResolution = findBestPreviewSizeValue(parameters, screenResolution);
@@ -108,13 +108,17 @@ final class CameraConfigurationManager {
     if (focusMode != null) {
       parameters.setFocusMode(focusMode);
     }
-
     parameters.setPreviewSize(cameraResolution.x, cameraResolution.y);
     camera.setParameters(parameters);
+    camera.setDisplayOrientation(90);
   }
 
   Point getCameraResolution() {
-    return cameraResolution;
+	  //return cameraResolution;
+	  int tmp = cameraResolution.x;
+	  cameraResolution.x = cameraResolution.y;
+	  cameraResolution.y = tmp;
+	  return cameraResolution;
   }
 
   Point getScreenResolution() {
@@ -204,7 +208,7 @@ final class CameraConfigurationManager {
       float aspectRatio = (float) maybeFlippedWidth / (float) maybeFlippedHeight;
       float newDiff = Math.abs(aspectRatio - screenAspectRatio);
       if (newDiff < diff) {
-        bestSize = new Point(realWidth, realHeight);
+          bestSize = new Point(realWidth, realHeight);
         diff = newDiff;
       }
     }

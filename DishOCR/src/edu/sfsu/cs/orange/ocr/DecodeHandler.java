@@ -102,8 +102,17 @@ final class DecodeHandler extends Handler {
    * @param width Image width
    * @param height Image height
    */
-  private void ocrContinuousDecode(byte[] data, int width, int height) {   
-    PlanarYUVLuminanceSource source = activity.getCameraManager().buildLuminanceSource(data, width, height);
+  private void ocrContinuousDecode(byte[] data, int width, int height) {
+	byte[] rotatedData = new byte[data.length];
+	for (int y = 0; y < height; y++) {
+	  for (int x = 0; x < width; x++)
+	    rotatedData[x * height + height - y - 1] = data[x + y * width];
+	}
+	int tmp = width;
+	width = height;
+	height = tmp;
+
+	PlanarYUVLuminanceSource source = activity.getCameraManager().buildLuminanceSource(rotatedData, width, height);
     if (source == null) {
       sendContinuousOcrFailMessage();
       return;

@@ -209,12 +209,12 @@
               android:layout_marginTop="8dip"
               android:scaleType="center"
               android:visibility="gone" /> 
-     <Button
+     <!-- <Button
         android:id="@+id/backButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
-        android:text="Back" />
+        android:text="Back" /> -->
       
     <TextView android:id="@+id/status_view_bottom"
               android:layout_width="wrap_content"

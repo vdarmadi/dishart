@@ -28,6 +28,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -60,6 +61,11 @@ public class GoogleMapActivity extends FragmentActivity {
 			sb.append((char) cp);
 		}
 		return sb.toString();
+	}
+
+	public void onBackPressed() {
+		Log.d(TAG, "Back pressed");
+		finish();
 	}
 
 	private static JSONObject queryJson(String url) {

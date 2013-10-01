@@ -394,7 +394,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     Display display = getWindowManager().getDefaultDisplay();
     int width = display.getWidth();
     int height = display.getHeight();
-    FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(width * 3/4, (int)((height - (height * 1/12)) / 2), Gravity.CENTER_HORIZONTAL);
+    FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(width * 9/10, (int)((height - (height * 1/12)) / 3), Gravity.CENTER_HORIZONTAL);
     imageResult.setLayoutParams(layoutParams);
 
     isEngineReady = false;
@@ -412,7 +412,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
     LayoutParams lp = (LayoutParams) lv.getLayoutParams();
     
-    lp.height = (int) (height * 0.45);
+    lp.height = (int) height - (((height - (height * 1/12)) * 4 / 10) + (height * 1/12));
     lv.setLayoutParams(lp);
 
     lv.setOnItemClickListener(new OnItemClickListener() {

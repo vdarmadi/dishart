@@ -29,7 +29,9 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.codec.binary.Base64;
 import org.json.JSONArray;
@@ -49,7 +51,6 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -69,18 +70,14 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -229,8 +226,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private double percentage = 0;
   private boolean substrMatch;
   private boolean isLoadingImg;
-
-  private List<String> dishNames = new ArrayList<String>();
+  private Map<String, List<String>> dishNames = new LinkedHashMap<String, List<String>>(); // Holding menu.
   private String prevDishName = "";
   //private Button backButton;
 
@@ -294,7 +290,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     viewfinderView.setCameraManager(cameraManager);
     
     Intent intent = getIntent();
-    this.dishNames = intent.getStringArrayListExtra("dishNames");
+    ArrayList<MenuData> mdl = intent.getParcelableArrayListExtra("dishNames"); // Transfer data here.
     
     //backButton = (Button) findViewById(R.id.backButton);
     //backButton.setOnClickListener(new OnClickListener() {
@@ -399,77 +395,96 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
     isEngineReady = false;
 
-    ArrayList<String> listItems=new ArrayList<String>();
-    ArrayAdapter<String> adapter;
-
-    for (String menuTitle : dishNames) {
-        listItems.add(menuTitle);
-    }
-    java.util.Collections.sort(listItems);
     ListView lv = (ListView) findViewById(R.id.restList);
-    adapter=new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, listItems);
+
+    // Transfering data from MenuData object to Map<String, List<String>> because of the adapter.
+    for (MenuData md : mdl) {
+    	dishNames.put(md.getSection(), md.getItems());
+    }
+    MapAdapter<Map<String, List<String>>> adapter;
+    adapter = new MapAdapter<Map<String, List<String>>>(dishNames) {
+
+        @Override
+        protected View getHeaderView(int position, View convertView, ViewGroup parent) {
+            TextView v = convertView == null ? new TextView(parent.getContext()) : (TextView) convertView;
+            v.setText((String) getItem(position));
+            v.setTextSize(18);
+            v.setTypeface(null, Typeface.BOLD);
+            v.setPadding(0, 5, 0, 0);
+            return v;
+        }
+
+        @Override
+        protected View getListItemView(int position, View convertView, ViewGroup parent) {
+        	TextView v = convertView == null ? new TextView(parent.getContext()) : (TextView) convertView;
+            String item = (String) getItem(position);
+            v.setText(item);
+            v.setTextSize(15);
+            v.setPadding(0, 5, 0, 0);
+            v.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View view) {
+					  // Access HTTP async, this is issue after Android 3.0.
+      	    	  final String dishName = ((TextView)view).getText().toString();;    	  	
+      	    	  AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+      	    		  private ProgressDialog pd;
+      	    		  Bitmap bm;
+      	    		  
+      	    		  @Override
+      	    		  protected void onPreExecute() {
+      	    			  isLoadingImg = true;
+      	    			  pd = new ProgressDialog(CaptureActivity.this);
+      	    			  pd.setTitle("Found matches...");
+      	    			  pd.setMessage("Please wait.");
+      	    			  pd.setCancelable(false);
+      	    			  pd.setIndeterminate(true);
+      	    			  pd.show();
+      	    		  }
+      	    		  
+      	    		  @Override
+      	    		  protected Void doInBackground(Void... arg0) {
+      	    			  try {
+      	    				  bm = CaptureActivity.getImage(dishName);
+      	    				  if (bm == null) {
+      	    					  Log.d(TAG, "Got image default");
+      	    					  tResult = dishName + "\nfrom: Default";
+      	    					  bm = getBitmapFromAsset("default.jpg");
+      	    				  }
+      	    			  } 
+      	    			  catch (IOException e) {
+      	    				  Log.e(TAG, "Could not read image from Google", e);
+      	    			  } 
+      	    			  catch (JSONException e) {
+      	    				  Log.e(TAG, "Could not read image from Google", e);
+      	    			  }
+      	    			  return null;
+      	    		  }
+      	    		  @Override
+      	    		  protected void onPostExecute(Void result) {
+      	    			  pd.dismiss();
+      	    			  imageResult.setImageBitmap(bm);
+      	    			  imageResult.setVisibility(View.VISIBLE);
+      	    			  imageResult.invalidate(); // Fix image flickering.
+      	    			  textResult.setText(tResult);
+      	    			  textResult.setVisibility(View.VISIBLE);
+      	    			  textResult.invalidate();
+      	    			  isLoadingImg = false;
+      	    		  }
+      	    		};
+      	    		task.execute((Void[]) null);
+				}
+        	});
+            return v;
+        }
+    };
+
     lv.setAdapter(adapter);
 
     LayoutParams lp = (LayoutParams) lv.getLayoutParams();
     
     lp.height = (int) height - (((height - (height * 1/12)) * 4 / 10) + (height * 1/12));
     lv.setLayoutParams(lp);
-
-    lv.setOnItemClickListener(new OnItemClickListener() {
-
-		@Override
-		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-			  // Access HTTP async, this is issue after Android 3.0.
-	    	  final String dishName = ((TextView)view).getText().toString();;    	  	
-	    	  AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
-	    		  private ProgressDialog pd;
-	    		  Bitmap bm;
-	    		  
-	    		  @Override
-	    		  protected void onPreExecute() {
-	    			  isLoadingImg = true;
-	    			  pd = new ProgressDialog(CaptureActivity.this);
-	    			  pd.setTitle("Found matches...");
-	    			  pd.setMessage("Please wait.");
-	    			  pd.setCancelable(false);
-	    			  pd.setIndeterminate(true);
-	    			  pd.show();
-	    		  }
-	    		  
-	    		  @Override
-	    		  protected Void doInBackground(Void... arg0) {
-	    			  try {
-	    				  bm = CaptureActivity.getImage(dishName);
-	    				  if (bm == null) {
-	    					  Log.d(TAG, "Got image default");
-	    					  tResult = dishName + "\nfrom: Default";
-	    					  bm = getBitmapFromAsset("default.jpg");
-	    				  }
-	    			  } 
-	    			  catch (IOException e) {
-	    				  Log.e(TAG, "Could not read image from Google", e);
-	    			  } 
-	    			  catch (JSONException e) {
-	    				  Log.e(TAG, "Could not read image from Google", e);
-	    			  }
-	    			  return null;
-	    		  }
-	    		  @Override
-	    		  protected void onPostExecute(Void result) {
-	    			  pd.dismiss();
-	    			  imageResult.setImageBitmap(bm);
-	    			  imageResult.setVisibility(View.VISIBLE);
-	    			  imageResult.invalidate(); // Fix image flickering.
-	    			  textResult.setText(tResult);
-	    			  textResult.setVisibility(View.VISIBLE);
-	    			  textResult.invalidate();
-	    			  isLoadingImg = false;
-	    		  }
-	    		};
-	    		task.execute((Void[]) null);
-		}
-	});
-    }
+  } // Finish onCreate().
   
   /**
    * Method for reading image from asset folder.
@@ -992,11 +1007,14 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       
       // Iterates through the menu titles and see if there is a match.
       String imageName = "";
-      for (String menuTitle : dishNames) {
-    	  if (match(normOcrTextResult, menuTitle.replaceAll("\\s",""))) {
-    		  imageName = menuTitle;
-    		  break;
-    	  }
+
+      mainloop: for (String section : dishNames.keySet()) { // We have now to go through the sections and items.
+	      for (String menuTitle : dishNames.get(section)) {
+	    	  if (match(normOcrTextResult, menuTitle.replaceAll("\\s",""))) {
+	    		  imageName = menuTitle;
+	    		  break mainloop; // we have to break the whole loop
+	    	  }
+	      }
       }
       if (imageName != null && imageName.length() > 0 && !this.isLoadingImg && !this.prevDishName.equals(imageName)) { // MATCH.
     	  this.prevDishName = imageName;

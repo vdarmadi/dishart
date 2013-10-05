@@ -28,13 +28,10 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
-import com.google.android.gms.maps.GoogleMap.OnMarkerDragListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
@@ -52,7 +49,7 @@ public class GoogleMapActivity extends FragmentActivity {
 	private static final String TAG = GoogleMapActivity.class.getSimpleName();
 	private  Location location;
 	private String clientId = "cqgqdiwm4861uty3kbolywc1h";
-	private Set dishNames = new HashSet<String>();
+	private ArrayList<MenuData> dishNames = new ArrayList<MenuData>(); // Holding menu data for a restaurant.
 	
 	private static String readAll(Reader rd) throws IOException {
 		StringBuilder sb = new StringBuilder();
@@ -258,13 +255,27 @@ public class GoogleMapActivity extends FragmentActivity {
 										JSONArray menus = jsonObject.getJSONArray("entries");
 	
 										// Foods / Menus
-										dishNames.clear();
+										dishNames.clear(); // This is ArrayList of parceables "MenuData".
+										ArrayList<String> list = new ArrayList<String>(); // This is for menu data.
+										String section = ""; // Name of the section.
 										for (int j = 0; j < menus.length(); j++) {
 											JSONObject childJSONObject = menus.getJSONObject(j);
 											String dishName = childJSONObject.getString("title");
-											
-											if (!dishNameBlacklist.contains(dishName)) {
-												dishNames.add(dishName);
+											String type = childJSONObject.getString("type"); // SinglePlatform always start with section then items.
+											if ("section".equals(type)) {
+												if (!list.isEmpty() && !section.isEmpty()) { // If this is not first iteration.
+													MenuData md = new MenuData();
+													md.setItems(list);
+													md.setSection(section);
+													dishNames.add(md);
+													list = new ArrayList<String>(); // Refresh Menu list
+													section = dishName; // next.
+												} else { // first time
+													section = dishName;
+												}
+											}
+											else {
+												list.add(dishName); // If normal item then put into the list.
 											}
 										}
 									}
@@ -282,7 +293,9 @@ public class GoogleMapActivity extends FragmentActivity {
 										     JSONArray jsonArray3 = childJSONObject.getJSONArray("sections");
 										     for (int j = 0; j < jsonArray3.length(); j++) {
 										    	 JSONObject jsonObject2 = jsonArray3.getJSONObject(j);
-										    	 JSONArray jsonArray4 = jsonObject2.getJSONArray("subsections");										    	 
+										    	 String sectionName = jsonObject2.getString("section_name"); // Get section name.
+										    	 JSONArray jsonArray4 = jsonObject2.getJSONArray("subsections");
+										    	 ArrayList<String> list = new ArrayList<String>(); // Holding menu data for 1 section.
 										    	 for (int k = 0; k < jsonArray4.length(); k++) {
 										    		 JSONObject jsonObject3 = jsonArray4.getJSONObject(k);
 										    		 JSONArray jsonArray5 = jsonObject3.getJSONArray("contents");
@@ -291,16 +304,20 @@ public class GoogleMapActivity extends FragmentActivity {
 										    			 if ("ITEM".equals(jsonObject4.get("type"))) {
 										    				 String dishName = jsonObject4.getString("name");
 										    				 if (!dishNameBlacklist.contains(dishName)) {
-										    					 dishNames.add(dishName);
+										    					 list.add(dishName); // Add item into the current section.
 										    				 }
 										    			 }
 										    		 }
 										    	 } 
+										    	 MenuData md = new MenuData();
+										    	 md.setItems(list);
+										    	 md.setSection(sectionName);
+										    	 dishNames.add(md);
 										     }
 										}
 									}
 									Intent intent = new Intent(GoogleMapActivity.this, CaptureActivity.class);
-									intent.putStringArrayListExtra("dishNames", new ArrayList<String>(dishNames));
+									intent.putParcelableArrayListExtra("dishNames", dishNames); // Send to capture activity.
 									startActivity(intent);
 									finish();
 								} catch (SignatureException e) {

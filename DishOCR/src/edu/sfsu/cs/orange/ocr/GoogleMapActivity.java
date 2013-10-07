@@ -29,6 +29,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
@@ -101,6 +102,11 @@ public class GoogleMapActivity extends FragmentActivity {
 
 			@Override
 			protected void onPreExecute() {
+				// Move the camera in the center of the location first. Otherwise it will show Africa.
+				mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
+				CameraUpdate center = CameraUpdateFactory.newLatLng(new LatLng(latitude, longitude));
+				mMap.moveCamera(center);
+
 				pd = new ProgressDialog(GoogleMapActivity.this);
 				pd.setTitle("Searching Restaurants Nearby...");
 				pd.setMessage("Please wait.");
@@ -115,16 +121,45 @@ public class GoogleMapActivity extends FragmentActivity {
 					Intent intent = getIntent();
 					restaurants = (HashMap<String, Restaurant>) intent.getSerializableExtra("restaurants");
 					if (restaurants == null || restaurants.isEmpty()) {
+						if (restaurants == null) { 
+							restaurants = new HashMap<String, Restaurant>(); 
+						}
+						restaurants.clear();
+						Set phones = new HashSet<String>();
+
+						URL url2 = new URL("http://api.locu.com/v1_0/venue/search/?api_key=27412850c47e4141c8d5948abdf63392eb33d863&location="+latitude+","+longitude+"&radius=1000&has_menu=true&category=restaurant");
+						URLConnection urlConnection = url2.openConnection();
+									
+						InputStream is2 = urlConnection.getInputStream();
+						BufferedReader rd2 = new BufferedReader(new InputStreamReader(is2, Charset.forName("UTF-8")));
+						String jsonText2 = readAll(rd2);
+						JSONObject json2 = new JSONObject(jsonText2);
+
+						JSONArray jsonArray = json2.getJSONArray("objects");
+						
+						for (int i = 0; i < jsonArray.length(); i++) {  // **line 2**
+						     JSONObject childJSONObject = jsonArray.getJSONObject(i);
+						     String id = childJSONObject.getString("id");
+						     double lat = childJSONObject.getDouble("lat");
+						     double lon = childJSONObject.getDouble("long");
+						     String phone = childJSONObject.getString("phone").replaceAll("[^0-9]", "").trim();
+						     String name = childJSONObject.getString("name");
+						     
+						     Restaurant r = new Restaurant();
+						     r.setId(id);
+						     r.setLatitude(lat);
+						     r.setLongitude(lon);
+						     r.setName(name);
+						     r.setSource("Locu");
+						     if(!phones.contains(phone)) {
+							     restaurants.put(name, r);
+							     phones.add(phone); 
+						     }						
+						}
 						String urlPath = "http://adri-silvy.com/android/restaurants.php?lat="+latitude+"&long="+longitude;
 						try {
 							JSONObject json = queryJson(urlPath);
-	
 							JSONArray jsonMainArr = json.getJSONArray("results");
-							if (restaurants == null) { 
-								restaurants = new HashMap<String, Restaurant>(); 
-							}
-							restaurants.clear();
-							Set phones = new HashSet<String>();
 							for (int i = 0; i < jsonMainArr.length(); i++) { // **line 2**
 								JSONObject childJSONObject = jsonMainArr.getJSONObject(i);
 								String id = childJSONObject.getString("location_id");
@@ -141,49 +176,19 @@ public class GoogleMapActivity extends FragmentActivity {
 								r.setSource("SP");
 								restaurants.put(name, r);
 								phones.add(ph);
-							}						
-							
-							URL url2 = new URL("http://api.locu.com/v1_0/venue/search/?api_key=27412850c47e4141c8d5948abdf63392eb33d863&location="+latitude+","+longitude+"&radius=1000&has_menu=true&category=restaurant");
-							URLConnection urlConnection = url2.openConnection();
-										
-							InputStream is2 = urlConnection.getInputStream();
-							BufferedReader rd2 = new BufferedReader(new InputStreamReader(is2, Charset.forName("UTF-8")));
-							String jsonText2 = readAll(rd2);
-							JSONObject json2 = new JSONObject(jsonText2);
-	
-							JSONArray jsonArray = json2.getJSONArray("objects");
-							
-							for (int i = 0; i < jsonArray.length(); i++) {  // **line 2**
-							     JSONObject childJSONObject = jsonArray.getJSONObject(i);
-							     String id = childJSONObject.getString("id");
-							     double lat = childJSONObject.getDouble("lat");
-							     double lon = childJSONObject.getDouble("long");
-							     String phone = childJSONObject.getString("phone").replaceAll("[^0-9]", "").trim();
-							     String name = childJSONObject.getString("name");
-							     
-							     Restaurant r = new Restaurant();
-							     r.setId(id);
-							     r.setLatitude(lat);
-							     r.setLongitude(lon);
-							     r.setName(name);
-							     r.setSource("Locu");
-							     if(!phones.contains(phone)) {
-								     restaurants.put(name, r);
-								     phones.add(phone); 
-							     }						
 							}
-	
 						} catch (JSONException e) {
-							// TODO Auto-generated catch block
-							Log.e(TAG, e.getMessage());
-						} catch (MalformedURLException e) {
-							Log.e(TAG, e.getMessage());
-						} catch (IOException e) {
 							Log.e(TAG, e.getMessage());
 						}
 						Thread.sleep(5000);
 					}
 				} catch (InterruptedException e) {
+					Log.e(TAG, e.getMessage());
+				} catch (MalformedURLException e) {
+					Log.e(TAG, e.getMessage());
+				} catch (IOException e) {
+					Log.e(TAG, e.getMessage());
+				} catch (JSONException e) {
 					Log.e(TAG, e.getMessage());
 				}
 				return null;
@@ -192,8 +197,6 @@ public class GoogleMapActivity extends FragmentActivity {
 			@Override
 			protected void onPostExecute(Void result) {
 				pd.dismiss();
-				
-				mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
 				mMap.setMyLocationEnabled(true);
 				mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 				Set latLong = new HashSet<String>();

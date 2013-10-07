@@ -108,7 +108,7 @@ public class GoogleMapActivity extends FragmentActivity {
 				mMap.moveCamera(center);
 
 				pd = new ProgressDialog(GoogleMapActivity.this);
-				pd.setTitle("Searching Restaurants Nearby...");
+				pd.setTitle("Locating Restaurants Nearby...");
 				pd.setMessage("Please wait.");
 				pd.setCancelable(false);
 				pd.setIndeterminate(true);

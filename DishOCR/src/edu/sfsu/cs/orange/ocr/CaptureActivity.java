@@ -29,6 +29,7 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -228,6 +229,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private boolean isLoadingImg;
   private Map<String, List<String>> dishNames = new LinkedHashMap<String, List<String>>(); // Holding menu.
   private String prevDishName = "";
+  private HashMap<String, Restaurant> restaurants; // Caching restaurants.
   //private Button backButton;
 
   Handler getHandler() {
@@ -291,7 +293,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     
     Intent intent = getIntent();
     ArrayList<MenuData> mdl = intent.getParcelableArrayListExtra("dishNames"); // Transfer data here.
-    
+    restaurants = (HashMap<String, Restaurant>) intent.getSerializableExtra("restaurants"); // Caching restaurants.
     //backButton = (Button) findViewById(R.id.backButton);
     //backButton.setOnClickListener(new OnClickListener() {
 	//	@Override
@@ -690,6 +692,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       if (lastResult == null) {
         setResult(RESULT_CANCELED);
         Intent intent = new Intent(CaptureActivity.this, GoogleMapActivity.class);
+        intent.putExtra("restaurants", restaurants); // Caching restaurants.
 		startActivity(intent);
         finish();
         return true;

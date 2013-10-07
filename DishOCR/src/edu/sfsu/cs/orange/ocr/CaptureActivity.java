@@ -409,7 +409,13 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         @Override
         protected View getHeaderView(int position, View convertView, ViewGroup parent) {
             TextView v = convertView == null ? new TextView(parent.getContext()) : (TextView) convertView;
-            v.setText((String) getItem(position) + ":");
+            String section = (String) getItem(position);
+            if (section != null && !section.isEmpty()) {
+            	section += ":";
+            } else {
+            	section = "Others:";
+            }            
+            v.setText(section);
             v.setTextSize(18);
             v.setTypeface(null, Typeface.BOLD);
             v.setPadding(0, 5, 0, 0);
@@ -436,7 +442,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       	    		  protected void onPreExecute() {
       	    			  isLoadingImg = true;
       	    			  pd = new ProgressDialog(CaptureActivity.this);
-      	    			  pd.setTitle("Retrieving Image...");
+      	    			  pd.setTitle("Retrieving " + dishName + " Image...");
       	    			  pd.setMessage("Please wait.");
       	    			  pd.setCancelable(false);
       	    			  pd.setIndeterminate(true);

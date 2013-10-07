@@ -225,7 +225,7 @@ public class GoogleMapActivity extends FragmentActivity {
 				
 				mMap.getUiSettings().setCompassEnabled(true);
 				mMap.getUiSettings().setZoomControlsEnabled(true);
-				mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 15));
+				mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 18));
 				mMap.setOnInfoWindowClickListener(new OnInfoWindowClickListener() {			
 					@Override
 					public void onInfoWindowClick(Marker arg0) {

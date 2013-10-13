@@ -16,10 +16,14 @@
  */
 package edu.sfsu.cs.orange.ocr;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import edu.sfsu.cs.orange.ocr.language.LanguageCodeHelper;
 import edu.sfsu.cs.orange.ocr.language.TranslatorBing;
 import edu.sfsu.cs.orange.ocr.language.TranslatorGoogle;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
@@ -27,6 +31,8 @@ import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import android.util.Log;
+import android.view.KeyEvent;
 
 /**
  * Class to handle preferences that are saved across sessions of the app. Shows
@@ -76,6 +82,9 @@ public class PreferencesActivity extends PreferenceActivity implements
   
   private static SharedPreferences sharedPreferences;
   
+  private HashMap<String, Restaurant> restaurants; // Caching restaurants.
+  private ArrayList<MenuData> mdl; // Raw menu data.
+
   /**
    * Set the default preference values.
    * 
@@ -91,20 +100,38 @@ public class PreferencesActivity extends PreferenceActivity implements
     sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     
     //checkBoxPreferenceContinuousPreview = (CheckBoxPreference) getPreferenceScreen().findPreference(KEY_CONTINUOUS_PREVIEW);
-    listPreferenceSourceLanguage = (ListPreference) getPreferenceScreen().findPreference(KEY_SOURCE_LANGUAGE_PREFERENCE);
+    //listPreferenceSourceLanguage = (ListPreference) getPreferenceScreen().findPreference(KEY_SOURCE_LANGUAGE_PREFERENCE);
     //checkBoxTranslate = (CheckBoxPreference) getPreferenceScreen().findPreference(KEY_TOGGLE_TRANSLATION);
-    listPreferenceTargetLanguage = (ListPreference) getPreferenceScreen().findPreference(KEY_TARGET_LANGUAGE_PREFERENCE);
-    listPreferenceTranslator = (ListPreference) getPreferenceScreen().findPreference(KEY_TRANSLATOR);    
-    listPreferenceOcrEngineMode = (ListPreference) getPreferenceScreen().findPreference(KEY_OCR_ENGINE_MODE);
+    //listPreferenceTargetLanguage = (ListPreference) getPreferenceScreen().findPreference(KEY_TARGET_LANGUAGE_PREFERENCE);
+    //listPreferenceTranslator = (ListPreference) getPreferenceScreen().findPreference(KEY_TRANSLATOR);    
+    //listPreferenceOcrEngineMode = (ListPreference) getPreferenceScreen().findPreference(KEY_OCR_ENGINE_MODE);
     //checkBoxBeep = (CheckBoxPreference) getPreferenceScreen().findPreference(KEY_PLAY_BEEP);
-    editTextPreferenceCharacterBlacklist = (EditTextPreference) getPreferenceScreen().findPreference(KEY_CHARACTER_BLACKLIST);
-    editTextPreferenceCharacterWhitelist = (EditTextPreference) getPreferenceScreen().findPreference(KEY_CHARACTER_WHITELIST);
-    listPreferencePageSegmentationMode = (ListPreference) getPreferenceScreen().findPreference(KEY_PAGE_SEGMENTATION_MODE);
+    //editTextPreferenceCharacterBlacklist = (EditTextPreference) getPreferenceScreen().findPreference(KEY_CHARACTER_BLACKLIST);
+    //editTextPreferenceCharacterWhitelist = (EditTextPreference) getPreferenceScreen().findPreference(KEY_CHARACTER_WHITELIST);
+    //listPreferencePageSegmentationMode = (ListPreference) getPreferenceScreen().findPreference(KEY_PAGE_SEGMENTATION_MODE);
     //checkBoxReversedImage = (CheckBoxPreference) getPreferenceScreen().findPreference(KEY_REVERSE_IMAGE);
     
     // Create the entries/entryvalues for the translation target language list.
-    initTranslationTargetList();
+    //initTranslationTargetList();
     
+    Intent intent = getIntent();
+    mdl = intent.getParcelableArrayListExtra("dishNames"); // Transfer data here.
+    restaurants = (HashMap<String, Restaurant>) intent.getSerializableExtra("restaurants"); // Caching restaurants.
+
+  }
+  
+  @Override
+  public boolean onKeyDown(int keyCode, KeyEvent event) {
+    if (keyCode == KeyEvent.KEYCODE_BACK) {    
+        setResult(RESULT_CANCELED);
+        Intent intent = new Intent(PreferencesActivity.this, CaptureActivity.class);
+        intent.putExtra("restaurants", restaurants); // Caching restaurants.
+        intent.putParcelableArrayListExtra("dishNames", mdl); // Send to capture activity.
+		startActivity(intent);
+        finish();
+        return true;
+    }
+    return super.onKeyDown(keyCode, event);
   }
   
   /**
@@ -224,13 +251,13 @@ public class PreferencesActivity extends PreferenceActivity implements
   protected void onResume() {
     super.onResume();
     // Set up the initial summary values
-    listPreferenceTranslator.setSummary(sharedPreferences.getString(KEY_TRANSLATOR, CaptureActivity.DEFAULT_TRANSLATOR));
-    listPreferenceSourceLanguage.setSummary(LanguageCodeHelper.getOcrLanguageName(getBaseContext(), sharedPreferences.getString(KEY_SOURCE_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_SOURCE_LANGUAGE_CODE)));
-    listPreferenceTargetLanguage.setSummary(LanguageCodeHelper.getTranslationLanguageName(getBaseContext(), sharedPreferences.getString(KEY_TARGET_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE)));
-    listPreferencePageSegmentationMode.setSummary(sharedPreferences.getString(KEY_PAGE_SEGMENTATION_MODE, CaptureActivity.DEFAULT_PAGE_SEGMENTATION_MODE));
-    listPreferenceOcrEngineMode.setSummary(sharedPreferences.getString(KEY_OCR_ENGINE_MODE, CaptureActivity.DEFAULT_OCR_ENGINE_MODE));
-    editTextPreferenceCharacterBlacklist.setSummary(sharedPreferences.getString(KEY_CHARACTER_BLACKLIST, OcrCharacterHelper.getDefaultBlacklist(listPreferenceSourceLanguage.getValue())));
-    editTextPreferenceCharacterWhitelist.setSummary(sharedPreferences.getString(KEY_CHARACTER_WHITELIST, OcrCharacterHelper.getDefaultWhitelist(listPreferenceSourceLanguage.getValue())));
+    //listPreferenceTranslator.setSummary(sharedPreferences.getString(KEY_TRANSLATOR, CaptureActivity.DEFAULT_TRANSLATOR));
+    //listPreferenceSourceLanguage.setSummary(LanguageCodeHelper.getOcrLanguageName(getBaseContext(), sharedPreferences.getString(KEY_SOURCE_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_SOURCE_LANGUAGE_CODE)));
+    //listPreferenceTargetLanguage.setSummary(LanguageCodeHelper.getTranslationLanguageName(getBaseContext(), sharedPreferences.getString(KEY_TARGET_LANGUAGE_PREFERENCE, CaptureActivity.DEFAULT_TARGET_LANGUAGE_CODE)));
+    //listPreferencePageSegmentationMode.setSummary(sharedPreferences.getString(KEY_PAGE_SEGMENTATION_MODE, CaptureActivity.DEFAULT_PAGE_SEGMENTATION_MODE));
+    //listPreferenceOcrEngineMode.setSummary(sharedPreferences.getString(KEY_OCR_ENGINE_MODE, CaptureActivity.DEFAULT_OCR_ENGINE_MODE));
+    //editTextPreferenceCharacterBlacklist.setSummary(sharedPreferences.getString(KEY_CHARACTER_BLACKLIST, OcrCharacterHelper.getDefaultBlacklist(listPreferenceSourceLanguage.getValue())));
+    //editTextPreferenceCharacterWhitelist.setSummary(sharedPreferences.getString(KEY_CHARACTER_WHITELIST, OcrCharacterHelper.getDefaultWhitelist(listPreferenceSourceLanguage.getValue())));
     
     // Set up a listener whenever a key changes
     getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);

@@ -228,6 +228,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private boolean substrMatch;
   private boolean isLoadingImg;
   private Map<String, List<String>> dishNames = new LinkedHashMap<String, List<String>>(); // Holding menu.
+  private ArrayList<MenuData> mdl; // Raw menu data.
   private String prevDishName = "";
   private HashMap<String, Restaurant> restaurants; // Caching restaurants.
   //private Button backButton;
@@ -292,7 +293,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     viewfinderView.setCameraManager(cameraManager);
     
     Intent intent = getIntent();
-    ArrayList<MenuData> mdl = intent.getParcelableArrayListExtra("dishNames"); // Transfer data here.
+    mdl = intent.getParcelableArrayListExtra("dishNames"); // Transfer data here.
     restaurants = (HashMap<String, Restaurant>) intent.getSerializableExtra("restaurants"); // Caching restaurants.
     //backButton = (Button) findViewById(R.id.backButton);
     //backButton.setOnClickListener(new OnClickListener() {
@@ -733,7 +734,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     //    inflater.inflate(R.menu.options_menu, menu);
     super.onCreateOptionsMenu(menu);
     menu.add(0, SETTINGS_ID, 0, "Settings").setIcon(android.R.drawable.ic_menu_preferences);
-    menu.add(0, ABOUT_ID, 0, "About").setIcon(android.R.drawable.ic_menu_info_details);
+    //menu.add(0, ABOUT_ID, 0, "About").setIcon(android.R.drawable.ic_menu_info_details);
     return true;
   }
 
@@ -743,7 +744,10 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     switch (item.getItemId()) {
     case SETTINGS_ID: {
       intent = new Intent().setClass(this, PreferencesActivity.class);
+      intent.putParcelableArrayListExtra("dishNames", mdl); // Send to capture activity.
+      intent.putExtra("restaurants", restaurants); // Caching restaurants.
       startActivity(intent);
+      finish();
       break;
     }
     case ABOUT_ID: {

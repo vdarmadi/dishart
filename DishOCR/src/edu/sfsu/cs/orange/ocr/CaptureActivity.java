@@ -417,7 +417,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
             	section = "Others:";
             }            
             v.setText(section);
-            v.setTextSize(18);
+            v.setTextSize(20);
             v.setTypeface(null, Typeface.BOLD);
             v.setPadding(0, 5, 0, 0);
             return v;
@@ -428,7 +428,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         	TextView v = convertView == null ? new TextView(parent.getContext()) : (TextView) convertView;
             String item = (String) getItem(position);
             v.setText(item);
-            v.setTextSize(15);
+            v.setTextSize(17);
             v.setPadding(0, 5, 0, 0);
             v.setOnClickListener(new OnClickListener() {
 				@Override

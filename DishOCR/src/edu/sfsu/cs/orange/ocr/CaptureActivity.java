@@ -129,7 +129,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   public static final boolean DEFAULT_TOGGLE_BEEP = true;
   
   /** Whether to initially show a looping, real-time OCR display. */
-  public static final boolean DEFAULT_TOGGLE_CONTINUOUS = false;
+  public static final boolean DEFAULT_TOGGLE_CONTINUOUS = true;
   
   /** Whether to initially reverse the image returned by the camera. */
   public static final boolean DEFAULT_TOGGLE_REVERSED_IMAGE = false;
@@ -1466,7 +1466,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         // Show the default page on a clean install, and the what's new page on an upgrade.
         String page = lastVersion == 0 ? HelpActivity.DEFAULT_PAGE : HelpActivity.WHATS_NEW_PAGE;
         intent.putExtra(HelpActivity.REQUESTED_PAGE_KEY, page);
-        startActivity(intent);
+        //startActivity(intent); // Don't show this anymore. Otherwise exception.
         return true;
       }
     } catch (PackageManager.NameNotFoundException e) {

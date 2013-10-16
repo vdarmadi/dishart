@@ -56,6 +56,9 @@ public final class HelpActivity extends Activity {
   private final Button.OnClickListener doneListener = new Button.OnClickListener() {
     @Override
     public void onClick(View view) {
+      setResult(RESULT_CANCELED);
+      Intent intent = new Intent(HelpActivity.this, GoogleMapActivity.class);
+	  startActivity(intent);
       finish();
     }
   };

@@ -373,6 +373,7 @@ public class GoogleMapActivity extends FragmentActivity {
 				
 				mMap.getUiSettings().setCompassEnabled(true);
 				mMap.getUiSettings().setZoomControlsEnabled(true);
+				//Log.d(TAG, "Position: " + latitude + ", " + longitude);
 				mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 18));
 				mMap.setOnInfoWindowClickListener(new OnInfoWindowClickListener() {			
 					@Override

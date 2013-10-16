@@ -17,15 +17,27 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
@@ -35,6 +47,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -51,6 +64,7 @@ public class GoogleMapActivity extends FragmentActivity {
 	private  Location location;
 	private String clientId = "cqgqdiwm4861uty3kbolywc1h";
 	private ArrayList<MenuData> dishNames = new ArrayList<MenuData>(); // Holding menu data for a restaurant.
+	private static boolean isFirstLaunch; // True if this is the first time the app is being run
 	
 	private static String readAll(Reader rd) throws IOException {
 		StringBuilder sb = new StringBuilder();
@@ -79,6 +93,105 @@ public class GoogleMapActivity extends FragmentActivity {
 		}
 	}
 
+	 private boolean checkFirstLaunch() {
+	    try {
+	      PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
+	      int currentVersion = info.versionCode;
+	      SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+	      int lastVersion = prefs.getInt(PreferencesActivity.KEY_HELP_VERSION_SHOWN, 0);
+	      if (lastVersion == 0) {
+	        isFirstLaunch = true;
+	      } else {
+	        isFirstLaunch = false;
+	      }
+	      if (currentVersion > lastVersion) {
+	    	prefs.edit().putInt(PreferencesActivity.KEY_HELP_VERSION_SHOWN, currentVersion).commit();
+	        return true;
+	      }
+	    } catch (PackageManager.NameNotFoundException e) {
+	      Log.w(TAG, e);
+	    }
+	    return false;
+	  }
+	 
+	private JSONObject getLocationInfo(String address) {
+		StringBuilder stringBuilder = new StringBuilder();
+		try {
+
+			address = address.replaceAll(" ", "%20");
+
+			HttpPost httppost = new HttpPost(
+					"http://maps.google.com/maps/api/geocode/json?address="
+							+ address + "&sensor=false");
+			HttpClient client = new DefaultHttpClient();
+			HttpResponse response;
+			stringBuilder = new StringBuilder();
+
+			response = client.execute(httppost);
+			HttpEntity entity = response.getEntity();
+			InputStream stream = entity.getContent();
+			int b;
+			while ((b = stream.read()) != -1) {
+				stringBuilder.append((char) b);
+			}
+		} catch (ClientProtocolException e) {
+			Log.e(TAG, e.getMessage());
+		} catch (IOException e) {
+			Log.e(TAG, e.getMessage());
+		}
+
+		JSONObject jsonObject = new JSONObject();
+		try {
+			jsonObject = new JSONObject(stringBuilder.toString());
+		} catch (JSONException e) {
+			Log.e(TAG, e.getMessage());
+		}
+
+		return jsonObject;
+	}
+	 
+	private double getLat(JSONObject jsonObject) {
+		try {
+			double latitude = ((JSONArray) jsonObject.get("results")).getJSONObject(0)
+					.getJSONObject("geometry").getJSONObject("location")
+					.getDouble("lat");
+			return latitude;
+		} catch (JSONException e) {
+			Log.e(TAG, e.getMessage());
+			return 0;
+		}
+	}
+	private double getLong(JSONObject jsonObject) {
+		try {
+			double longitute = ((JSONArray) jsonObject.get("results"))
+					.getJSONObject(0).getJSONObject("geometry")
+					.getJSONObject("location").getDouble("lng");
+			return longitude;
+		} catch (JSONException e) {
+			Log.e(TAG, e.getMessage());
+			return 0;
+		}
+	}
+	
+	 private Address getLatLongByAddress(String strAddress) {
+		 Geocoder coder = new Geocoder(this);
+		 List<Address> address;
+
+		 try {
+			 // e.g. "1600 Amphitheatre Parkway, Mountain View, CA".
+		     address = coder.getFromLocationName(strAddress,5);
+		     if (address == null) {
+		         return null;
+		     }
+		     Address location = address.get(0);
+		     return location;
+		 }
+		 catch(Exception ex) {
+			 Log.e(TAG, ex.getMessage());
+		 }
+		 return null;
+	 }
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
@@ -90,6 +203,20 @@ public class GoogleMapActivity extends FragmentActivity {
 		//LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE); 
 		//lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 10, locationListener);
 		//lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+		
+		if (checkFirstLaunch()) {
+			// Record the last version for which we last displayed the What's New (Help) page
+	        
+	        Intent intent = new Intent(GoogleMapActivity.this, HelpActivity.class);
+	        //intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+	        
+	        // Show the default page on a clean install, and the what's new page on an upgrade.
+	        String page = HelpActivity.WHATS_NEW_PAGE;
+	        intent.putExtra(HelpActivity.REQUESTED_PAGE_KEY, page);
+	        startActivity(intent);
+			finish();
+			return;
+		}
 		
 		GPSTracker gps = new GPSTracker(this);
 		if(gps.canGetLocation()){ // gps enabled} // return boolean true/false
@@ -167,15 +294,33 @@ public class GoogleMapActivity extends FragmentActivity {
 								double rLat = childJSONObject.getDouble("latitude");
 								double rLong = childJSONObject.getDouble("longitude");
 								String ph = childJSONObject.getString("phone").replaceAll("[^0-9]", "").trim();
-	
+								String address1 = childJSONObject.getString("address1");
+								String city = childJSONObject.getString("city");
+								String region = childJSONObject.getString("region");
+								String postcode = childJSONObject.getString("postcode");
+								String strAddress = address1 + "," + city + "," + postcode + "," + region;
+								Address location = getLatLongByAddress(strAddress);
+								if (location != null) {
+									rLat = location.getLatitude();
+									rLong = location.getLongitude();
+								} else {
+									Log.e(TAG, "Get Lat Long by Address Failed " + strAddress);
+									JSONObject jsonObject = getLocationInfo(strAddress);
+									double lat = getLat(jsonObject);
+									double lon = getLong(jsonObject);
+									if (lat != 0) { rLat = lat; }
+									if (lon != 0) { rLong = lon; }
+								}
 								Restaurant r = new Restaurant();
 								r.setId(id);
 								r.setName(name);
 								r.setLatitude(rLat);
 								r.setLongitude(rLong);
 								r.setSource("SP");
-								restaurants.put(name, r);
-								phones.add(ph);
+								if(!phones.contains(ph)) {
+									restaurants.put(name, r);
+									phones.add(ph);
+								}
 							}
 						} catch (JSONException e) {
 							Log.e(TAG, e.getMessage());

@@ -70,13 +70,21 @@ while($row = mysql_fetch_array($result))
 	$latitude = $row["latitude"];
 	$longitude = $row["longitude"];
     $phone = $row["phone"];
+    $address1 = $row["address1"];
+    $city = $row["city"];
+    $region = $row["region"];
+    $postcode = $row["postcode"];
     //echo "Name: ".$name."<br>";
 	$results[] = array(
 						"name"=>$name,
 						"location_id"=>$location_id,
 						"latitude"=>$latitude,
 						"longitude"=>$longitude,
-                        "phone"=>$phone
+                        "phone"=>$phone,
+                        "address1"=>$address1,
+                        "city"=>$city,
+                        "region"=>$region,
+                        "postcode"=>$postcode
 						);
 }
 }

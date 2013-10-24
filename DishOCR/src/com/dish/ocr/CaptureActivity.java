@@ -71,6 +71,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -496,6 +497,11 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     lv.setLayoutParams(lp);
   } // Finish onCreate().
   
+  @Override
+  public boolean onTouchEvent(MotionEvent e) {
+	  cameraManager.requestAutoFocus(500L);
+	  return true;	  
+  }
   /**
    * Method for reading image from asset folder.
    */

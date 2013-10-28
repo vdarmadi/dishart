@@ -348,11 +348,11 @@ public class GoogleMapActivity extends FragmentActivity {
 				for (String id : (Set<String>)restaurants.keySet()) {
 					Restaurant r = restaurants.get(id);
 					float marker = 0;
-					if ("SP".equals(r.getSource())) {
-						marker = BitmapDescriptorFactory.HUE_AZURE;
-					} else {
-						marker = BitmapDescriptorFactory.HUE_ORANGE;
-					}
+					//if ("SP".equals(r.getSource())) {
+					marker = BitmapDescriptorFactory.HUE_RED;
+					//} else {
+					//	marker = BitmapDescriptorFactory.HUE_ORANGE;
+					//}
 					double finalLat = r.getLatitude();
 					double finalLong = r.getLongitude();
 					if (latLong.contains(Double.toString(finalLat) + Double.toString(finalLong))) {

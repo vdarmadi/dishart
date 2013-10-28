@@ -81,21 +81,27 @@ public class GPSTracker extends Service implements LocationListener {
                 }
                 // if GPS Enabled get lat/long using GPS Services
                 if (isGPSEnabled) {
-                    if (location == null) {
-                        locationManager.requestLocationUpdates(
-                                LocationManager.GPS_PROVIDER,
-                                MIN_TIME_BW_UPDATES,
-                                MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
-                        Log.d("GPS Enabled", "GPS Enabled");
-                        if (locationManager != null) {
-                            location = locationManager
-                                    .getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                            if (location != null) {
-                                latitude = location.getLatitude();
-                                longitude = location.getLongitude();
-                            }
-                        }
+                    //if (location == null) {
+                	long NetLocationTime = 0;
+                	if (location != null) {
+                		 NetLocationTime = location.getTime();
+                	}	
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+                    Log.d("GPS Enabled", "GPS Enabled");
+                    if (locationManager != null) {
+                    	Location locationGPS = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+	                    long GPSLocationTime = 0;
+	                    if (null != locationGPS) {
+	                    	GPSLocationTime = locationGPS.getTime(); 
+	                    }
+	                    if ( 0 < GPSLocationTime - NetLocationTime ) {
+	                    	if (locationGPS != null) {
+	                            latitude = locationGPS.getLatitude();
+	                            longitude = locationGPS.getLongitude();
+	                        }
+	                    }                            
                     }
+                    //}
                 }
             }
  

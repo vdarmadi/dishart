@@ -325,11 +325,13 @@ public class GoogleMapActivity extends FragmentActivity {
 						} catch (JSONException e) {
 							Log.e(TAG, e.getMessage());
 						}
-						Thread.sleep(5000);
+						//Thread.sleep(5000);
 					}
-				} catch (InterruptedException e) {
-					Log.e(TAG, e.getMessage());
-				} catch (MalformedURLException e) {
+				} 
+				//catch (InterruptedException e) {
+				//	Log.e(TAG, e.getMessage());
+				//} 
+				catch (MalformedURLException e) {
 					Log.e(TAG, e.getMessage());
 				} catch (IOException e) {
 					Log.e(TAG, e.getMessage());

@@ -5,6 +5,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -42,7 +43,8 @@ public class GPSTracker extends Service implements LocationListener {
  
     public GPSTracker(Context context) {
         this.mContext = context;
-        getLocation();
+        //getLocation();
+        getBestLocation();
     }
  
     public Location getLocation() {
@@ -110,6 +112,30 @@ public class GPSTracker extends Service implements LocationListener {
         }
  
         return location;
+    }
+
+    public Location getBestLocation() {
+    	try {
+	    	locationManager = (LocationManager) mContext.getSystemService(LOCATION_SERVICE);
+	    	// Define the criteria how to select the locatioin provider -> use
+	    	// default
+	    	Criteria criteria = new Criteria();
+	    	String provider = locationManager.getBestProvider(criteria, false);
+	    	Location location = locationManager.getLastKnownLocation(provider);
+	    	// Initialize the location fields
+	        if (location != null) {
+	        	Log.d(TAG, "Provider " + provider + " has been selected.");
+	        	this.canGetLocation = true;
+	          	onLocationChanged(location);
+	        } else {
+	        	Log.e(TAG, "Location not available");
+	        }
+	        return location;
+    	}
+    	catch (Exception ex) {
+        	Log.e(TAG, ex.getMessage());
+    	}
+    	return null;
     }
      
     /**
